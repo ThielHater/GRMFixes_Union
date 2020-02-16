@@ -3,6 +3,7 @@
 // For compile plugin in Multiplatform mode - select 'Debug' or 'Release' configuration.
 
 #include <map>
+#include <string>
 #include "Plugin_Header.h"
 
 namespace NAMESPACE {
@@ -109,14 +110,14 @@ namespace NAMESPACE {
 	}
 
 	// 0x00509A40 private: void __thiscall zCArchiverFactory::ReadLineArg(class zSTRING &,class zSTRING &,class zCBuffer *,class zFILE *)
-	void __fastcall zCArchiverFactoryEx_ReadLineArg(zCArchiverFactory* _this, zSTRING& line, zSTRING& arg, zCBuffer* buffer, zFILE* file);
+	void __fastcall zCArchiverFactoryEx_ReadLineArg(zCArchiverFactory* _this, void* vtable, zSTRING& line, zSTRING& arg, zCBuffer* buffer, zFILE* file);
 
-	CInvoke<void(__thiscall*)(zCArchiverFactory* _this, zSTRING& line, zSTRING& arg, zCBuffer* buffer, zFILE* file)> Ivk_zCArchiverFactoryEx_ReadLineArg(0x00509A40, &zCArchiverFactoryEx_ReadLineArg);
+	CInvoke<void(__thiscall*)(zCArchiverFactory* _this, void* vtable, zSTRING& line, zSTRING& arg, zCBuffer* buffer, zFILE* file)> Ivk_zCArchiverFactoryEx_ReadLineArg(0x00509A40, &zCArchiverFactoryEx_ReadLineArg);
 
-	void __fastcall zCArchiverFactoryEx_ReadLineArg(zCArchiverFactory* _this, zSTRING& line, zSTRING& arg, zCBuffer* buffer, zFILE* file)
+	void __fastcall zCArchiverFactoryEx_ReadLineArg(zCArchiverFactory* _this, void* vtable, zSTRING& line, zSTRING& arg, zCBuffer* buffer, zFILE* file)
 	{
 		// Call original function
-		Ivk_zCArchiverFactoryEx_ReadLineArg(_this, line, arg, buffer, file);
+		Ivk_zCArchiverFactoryEx_ReadLineArg(_this, vtable, line, arg, buffer, file);
 
 		std::string ln = line.ToChar();
 		std::string ag = arg.ToChar();
@@ -128,11 +129,11 @@ namespace NAMESPACE {
 	}
 
 	// 0x00525330 public: int __thiscall zCBspTree::LoadBIN(class zCFileBIN &,int)
-	int __fastcall zCBspTree_LoadBIN(zCBspTree* _this, zCFileBIN& file, zBOOL skipThisChunk);
+	int __fastcall zCBspTree_LoadBIN(zCBspTree* _this, void* vtable, zCFileBIN& file, zBOOL skipThisChunk);
 
-	CInvoke<int(__thiscall*)(zCBspTree* _this, zCFileBIN& file, zBOOL skipThisChunk)> Ivk_zCBspTree__LoadBIN(0x00525330, &zCBspTree_LoadBIN);
+	CInvoke<int(__thiscall*)(zCBspTree* _this, void* vtable, zCFileBIN& file, zBOOL skipThisChunk)> Ivk_zCBspTree__LoadBIN(0x00525330, &zCBspTree_LoadBIN);
 
-	int __fastcall zCBspTree_LoadBIN(zCBspTree* _this, zCFileBIN& file, zBOOL skipThisChunk)
+	int __fastcall zCBspTree_LoadBIN(zCBspTree* _this, void* vtable, zCFileBIN& file, zBOOL skipThisChunk)
 	{
 		bool& isLoadingXZEN = g_IsLoadingXZEN;
 
@@ -143,7 +144,7 @@ namespace NAMESPACE {
 		}
 
 		// Call game function
-		int result = Ivk_zCBspTree__LoadBIN(_this, file, skipThisChunk);
+		int result = Ivk_zCBspTree__LoadBIN(_this, vtable, file, skipThisChunk);
 
 		// Reset everything, worldmesh is done
 		if (isLoadingXZEN)
