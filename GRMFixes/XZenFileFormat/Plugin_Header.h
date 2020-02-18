@@ -1,7 +1,11 @@
 ﻿// Header file
 // Multi-platform file can not have `#pragma once`!!!
 
-namespace NAMESPACE {
+#include <map>
+#include <string>
+
+namespace NAMESPACE
+{
 	struct GothicMemoryLocations
 	{
 		struct LoadBin
