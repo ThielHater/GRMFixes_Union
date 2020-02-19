@@ -14,12 +14,12 @@ namespace NAMESPACE
 	std::map<unsigned int, unsigned char>& g_ActiveOriginalAsmBytes = g_OriginalZENLoadSaveAsmBytes;
 
 	// 0x00509A40 private: void __thiscall zCArchiverFactory::ReadLineArg(class zSTRING &,class zSTRING &,class zCBuffer *,class zFILE *)
-	void __fastcall zCArchiverFactoryEx_ReadLineArg(zCArchiverFactory* _this, void* vtable, zSTRING& line, zSTRING& arg, zCBuffer* buffer, zFILE* file);
-	CInvoke<void(__thiscall*)(zCArchiverFactory* _this, zSTRING& line, zSTRING& arg, zCBuffer* buffer, zFILE* file)> Ivk_zCArchiverFactoryEx_ReadLineArg(GothicMemoryLocations::zCArchiverFactory::ReadLineArg, &zCArchiverFactoryEx_ReadLineArg);
+	void __fastcall zCArchiverFactory_ReadLineArg(zCArchiverFactory* _this, void* vtable, zSTRING& line, zSTRING& arg, zCBuffer* buffer, zFILE* file);
+	CInvoke<void(__thiscall*)(zCArchiverFactory* _this, zSTRING& line, zSTRING& arg, zCBuffer* buffer, zFILE* file)> Ivk_zCArchiverFactory_ReadLineArg(GothicMemoryLocations::zCArchiverFactory::ReadLineArg, &zCArchiverFactory_ReadLineArg);
 
 	// 0x00525330 public: int __thiscall zCBspTree::LoadBIN(class zCFileBIN &,int)
 	int __fastcall zCBspTree_LoadBIN(zCBspTree* _this, void* vtable, zCFileBIN& file, zBOOL skipThisChunk);
-	CInvoke<int(__thiscall*)(zCBspTree* _this, zCFileBIN& file, zBOOL skipThisChunk)> Ivk_zCBspTree__LoadBIN(GothicMemoryLocations::zCBspTree::LoadBIN, &zCBspTree_LoadBIN);
+	CInvoke<int(__thiscall*)(zCBspTree* _this, zCFileBIN& file, zBOOL skipThisChunk)> Ivk_zCBspTree_LoadBIN(GothicMemoryLocations::zCBspTree::LoadBIN, &zCBspTree_LoadBIN);
 
 	// 0x0050A520 private: void __thiscall zCArchiverFactory::WriteLine(char const * const,class zCBuffer *,class zFILE *)
 	void __fastcall zCArchiverFactory_WriteLineChar(zCArchiverFactory* _this, void* vtable, const char* line, struct zCBuffer* buffer, struct zFILE* file);
@@ -150,10 +150,10 @@ namespace NAMESPACE
 		SetConsoleTextAttribute(con, 8);
 	}
 
-	void __fastcall zCArchiverFactoryEx_ReadLineArg(zCArchiverFactory* _this, void* vtable, zSTRING& line, zSTRING& arg, zCBuffer* buffer, zFILE* file)
+	void __fastcall zCArchiverFactory_ReadLineArg(zCArchiverFactory* _this, void* vtable, zSTRING& line, zSTRING& arg, zCBuffer* buffer, zFILE* file)
 	{
 		// Call original function
-		Ivk_zCArchiverFactoryEx_ReadLineArg(_this, line, arg, buffer, file);
+		Ivk_zCArchiverFactory_ReadLineArg(_this, line, arg, buffer, file);
 
 		std::string ln = line.ToChar();
 		std::string ag = arg.ToChar();
@@ -181,7 +181,7 @@ namespace NAMESPACE
 		}
 
 		// Call game function
-		int result = Ivk_zCBspTree__LoadBIN(_this, file, skipThisChunk);
+		int result = Ivk_zCBspTree_LoadBIN(_this, file, skipThisChunk);
 
 		// Reset everything, worldmesh is done
 		if (isLoadingXZEN)
