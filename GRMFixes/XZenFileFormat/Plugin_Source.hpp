@@ -15,11 +15,23 @@ namespace NAMESPACE
 
 	// 0x00509A40 private: void __thiscall zCArchiverFactory::ReadLineArg(class zSTRING &,class zSTRING &,class zCBuffer *,class zFILE *)
 	void __fastcall zCArchiverFactoryEx_ReadLineArg(zCArchiverFactory* _this, void* vtable, zSTRING& line, zSTRING& arg, zCBuffer* buffer, zFILE* file);
-	CInvoke<void(__thiscall*)(zCArchiverFactory* _this, zSTRING& line, zSTRING& arg, zCBuffer* buffer, zFILE* file)> Ivk_zCArchiverFactoryEx_ReadLineArg(0x00509A40, &zCArchiverFactoryEx_ReadLineArg);
+	CInvoke<void(__thiscall*)(zCArchiverFactory* _this, zSTRING& line, zSTRING& arg, zCBuffer* buffer, zFILE* file)> Ivk_zCArchiverFactoryEx_ReadLineArg(GothicMemoryLocations::zCArchiverFactory::ReadLineArg, &zCArchiverFactoryEx_ReadLineArg);
 
 	// 0x00525330 public: int __thiscall zCBspTree::LoadBIN(class zCFileBIN &,int)
 	int __fastcall zCBspTree_LoadBIN(zCBspTree* _this, void* vtable, zCFileBIN& file, zBOOL skipThisChunk);
-	CInvoke<int(__thiscall*)(zCBspTree* _this, zCFileBIN& file, zBOOL skipThisChunk)> Ivk_zCBspTree__LoadBIN(0x00525330, &zCBspTree_LoadBIN);
+	CInvoke<int(__thiscall*)(zCBspTree* _this, zCFileBIN& file, zBOOL skipThisChunk)> Ivk_zCBspTree__LoadBIN(GothicMemoryLocations::zCBspTree::LoadBIN, &zCBspTree_LoadBIN);
+
+	// 0x0050A520 private: void __thiscall zCArchiverFactory::WriteLine(char const * const,class zCBuffer *,class zFILE *)
+	void __fastcall zCArchiverFactory_WriteLineChar(zCArchiverFactory* _this, void* vtable, const char* line, struct zCBuffer* buffer, struct zFILE* file);
+	CInvoke<void(__thiscall*)(zCArchiverFactory* _this, const char* line, struct zCBuffer* buffer, struct zFILE* file)> Ivk_zCArchiverFactory_WriteLineChar(GothicMemoryLocations::zCArchiverFactory::WriteLineChar, &zCArchiverFactory_WriteLineChar);
+
+	// 0x0050A420 private: void __thiscall zCArchiverFactory::WriteLine(class zSTRING const&, class zCBuffer*, class zFILE*)
+	void __fastcall zCArchiverFactory_WriteLine(zCArchiverFactory* _this, void* vtable, const zSTRING& line, struct zCBuffer* buffer, struct zFILE* file);
+	CInvoke<void(__thiscall*)(zCArchiverFactory* _this, const zSTRING& line, struct zCBuffer* buffer, struct zFILE* file)> Ivk_zCArchiverFactory_WriteLine(GothicMemoryLocations::zCArchiverFactory::WriteLine, &zCArchiverFactory_WriteLine);
+
+	// 0x005244C0 public: void __thiscall zCBspTree::SaveBIN(class zCFileBIN &)
+	void __fastcall zCBspTree_SaveBIN(zCBspTree* _this, void* vtable, zCFileBIN& file);
+	CInvoke<void(__thiscall*)(zCBspTree* _this, zCFileBIN& file)> Ivk_zCBspTree_SaveBIN(GothicMemoryLocations::zCBspTree::SaveBIN, &zCBspTree_SaveBIN);
 
 	void ReplaceCodeBytes(const char* bytes, int numBytes, unsigned int addr)
 	{
@@ -90,7 +102,8 @@ namespace NAMESPACE
 		ReplaceCodeBytes(cast32, strlen(cast32), GothicMemoryLocations::SaveMSH::ASM_INDEX_CAST);
 		cmd << "- mov ax, [edx+0Ch] -> mov eax, [edx+0x0C]" << endl;
 
-		// LoadMSH: add [esp+214h+var_1FC], 6 -> add [esp+214h+var_1FC], 8 -- Offset to the next vertex/feature-index pair. 
+#ifdef GAME
+		// LoadMSH: add [esp+214h+var_1FC], 6 -> add [esp+214h+var_1FC], 8 -- Offset to the next vertex/feature-index pair.
 		// Feature-Indices are 4bytes, so with a 2byte vertexindex it gives 6. We need to make it 8.
 		const char* offset8 = "\x83\x44\x24\x18\x08";
 		ReplaceCodeBytes(offset8, strlen(offset8), GothicMemoryLocations::LoadMSH::ASM_INDEX_STRUCT_SIZE_ADD);
@@ -101,6 +114,23 @@ namespace NAMESPACE
 		const char* loadCast = "\x8B\x02\x90";
 		ReplaceCodeBytes(loadCast, strlen(loadCast), GothicMemoryLocations::LoadMSH::ASM_INDEX_CAST);
 		cmd << "- movzx eax, word ptr [edx] -> mov eax, [edx]" << endl;
+#else
+		// LoadMSH: add ecx, 6 -> add ecx, 8 -- Offset to the next vertex/feature-index pair.
+		// Feature-Indices are 4bytes, so with a 2byte vertexindex it gives 6. We need to make it 8.
+		const char* offset8 = "\x83\xC1\x08";
+		ReplaceCodeBytes(offset8, strlen(offset8), GothicMemoryLocations::LoadMSH::ASM_INDEX_STRUCT_SIZE_ADD);
+		cmd << "- add ecx, 6 -> add ecx, 8" << endl;
+
+		// LoadMSH: mov dx, [eax] -> mov edx, [eax] -- Remove the cast from 32 to 16-bit when getting the index out of the datastructure
+		// Also add a NOP, since a regular mov is only 2 bytes instead of 3 for mov to dx.
+		const char* loadCast = "\x8B\x10\x90";
+		ReplaceCodeBytes(loadCast, strlen(loadCast), GothicMemoryLocations::LoadMSH::ASM_INDEX_CAST);
+		cmd << "- mov dx, [eax] -> mov edx, [eax]" << endl;
+
+		// SaveBIN: Mute the annoying warning about a "too large" chunk
+		ReplaceCodeRange(0x90, GothicMemoryLocations::SaveBin::ASM_BSP_ERROR_START, GothicMemoryLocations::SaveBin::ASM_BSP_ERROR_END);
+		cmd << "- Muted \"Too large chunk\"-warning on ZEN-Save." << endl;
+#endif
 
 		// LoadBIN: Mute the annoying warning about a "too large" chunk
 		ReplaceCodeRange(0x90, GothicMemoryLocations::LoadBin::ASM_BSP_ERROR_START, GothicMemoryLocations::LoadBin::ASM_BSP_ERROR_END);
@@ -172,5 +202,75 @@ namespace NAMESPACE
 		}
 
 		return result;
+	}
+
+	/* Leave a note in the ZEN-File so we know it has been modified data */
+	void __fastcall zCArchiverFactory_WriteLineChar(zCArchiverFactory* _this, void* vtable, const char* line, struct zCBuffer* buffer, struct zFILE* file)
+	{
+#ifdef GAME
+		Ivk_zCArchiverFactory_WriteLineChar(_this, line, buffer, file);
+#else
+		std::string ln = line;
+
+		//debugPrint("Written: %s\n", ln.c_str());
+
+		// Check if we are currently writing the "user" argument
+		if (ln.substr(0, 4) == "user")
+		{
+			HANDLE con = cmd.GetHandle();
+			SetConsoleTextAttribute(con, 2);
+			cmd << "Plugin: Writing modified 'user'-argument: ";
+			SetConsoleTextAttribute(con, 10);
+			cmd << "XZEN" <<endl;
+			SetConsoleTextAttribute(con, 8);
+
+			// Write our own user-line
+			Ivk_zCArchiverFactory_WriteLineChar(_this, "user XZEN", buffer, file);
+			return;
+		}
+
+		// Just write the line
+		Ivk_zCArchiverFactory_WriteLineChar(_this, line, buffer, file);
+#endif
+	}
+
+	/* Just proxy this to the char* version */
+	void __fastcall zCArchiverFactory_WriteLine(zCArchiverFactory* _this, void* vtable, const zSTRING& line, struct zCBuffer* buffer, struct zFILE* file)
+	{
+		zCArchiverFactory_WriteLineChar(_this, vtable, line.ToChar(), buffer, file);
+	}
+
+	/* Only apply fixes while saving the worldmesh */
+	void __fastcall zCBspTree_SaveBIN(zCBspTree* _this, void* vtable, zCFileBIN& file)
+	{
+#ifdef GAME
+		Ivk_zCBspTree_SaveBIN(_this, file);
+#else
+		// Apply fixes if we're saving a world
+		HANDLE con = cmd.GetHandle();
+		SetConsoleTextAttribute(con, 2);
+		cmd << "Plugin: ";
+		SetConsoleTextAttribute(con, 10);
+		cmd << "Saving XZEN! Applying code modifications..." << endl;
+		SetConsoleTextAttribute(con, 8);
+
+		FixZENLoadSave();
+
+		// Call game function
+		Ivk_zCBspTree_SaveBIN(_this, file);
+
+		// Go back to default code
+		SetConsoleTextAttribute(con, 2);
+		cmd << "Plugin: ";
+		SetConsoleTextAttribute(con, 10);
+		cmd << "Done! Restoring original code..." << endl;
+		SetConsoleTextAttribute(con, 8);
+
+		// Go back to normal at the start
+		RestoreOriginalCodeBytes(g_OriginalZENLoadSaveAsmBytes);
+
+		// Reset this for the next time
+		g_OriginalZENLoadSaveAsmBytes.clear();
+#endif
 	}
 }

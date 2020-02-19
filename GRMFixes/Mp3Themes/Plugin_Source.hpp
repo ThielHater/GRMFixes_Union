@@ -155,6 +155,7 @@ namespace NAMESPACE
 
 						SetConsoleTextAttribute(con, 2);
 						cmd << "!" << endl;
+						SetConsoleTextAttribute(con, 8);
 
 						g_themeHandlesMutex.lock();
 						g_themeHandles.erase(it->first);
@@ -243,10 +244,11 @@ namespace NAMESPACE
 			cmd << name.c_str();
 			SetConsoleTextAttribute(con, 2);
 			cmd << "!" << endl;
+			SetConsoleTextAttribute(con, 8);
 			Ivk_zCMusicSys_DirectMusic_PlayThemeByScript(_this, id, manipulate, done);
 		}
 	}
-	
+
 	void __fastcall zCMusicSys_DirectMusic_PlayTheme(zCMusicSys_DirectMusic* _this, void* vtable, struct zCMusicTheme* theme, const float& volume, const zTMus_TransType& tr, const zTMus_TransSubType& trSub)
 	{
 		std::string nextTheme(theme->fileName.ToChar());
@@ -300,11 +302,11 @@ namespace NAMESPACE
 			SetConsoleTextAttribute(con, 2);
 			cmd << " using ";
 			SetConsoleTextAttribute(con, 10);
-			
+
 			if (file_exist(wave))
 			{
 				cmd << "Miles";
-				
+
 				g_themeHandlesMutex.lock();
 
 				std::unordered_map<std::string, int>::iterator it = g_themeHandles.find(nextTheme);
@@ -336,6 +338,7 @@ namespace NAMESPACE
 
 			SetConsoleTextAttribute(con, 2);
 			cmd << ".." << endl;
+			SetConsoleTextAttribute(con, 8);
 
 			g_currentTheme = nextTheme;
 		}
@@ -346,6 +349,7 @@ namespace NAMESPACE
 			cmd << g_currentTheme.c_str();
 			SetConsoleTextAttribute(con, 2);
 			cmd << " already.." << endl;
+			SetConsoleTextAttribute(con, 8);
 		}
 	}
 }
