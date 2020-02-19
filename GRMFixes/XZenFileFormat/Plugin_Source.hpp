@@ -210,27 +210,33 @@ namespace NAMESPACE
 #ifdef GAME
 		Ivk_zCArchiverFactory_WriteLineChar(_this, line, buffer, file);
 #else
-		std::string ln = line;
-
-		//debugPrint("Written: %s\n", ln.c_str());
-
-		// Check if we are currently writing the "user" argument
-		if (ln.substr(0, 4) == "user")
+		if (file != NULL)
 		{
-			HANDLE con = cmd.GetHandle();
-			SetConsoleTextAttribute(con, 2);
-			cmd << "Plugin: Writing modified 'user'-argument: ";
-			SetConsoleTextAttribute(con, 10);
-			cmd << "XZEN" <<endl;
-			SetConsoleTextAttribute(con, 8);
+			std::string ln = line;
 
-			// Write our own user-line
-			Ivk_zCArchiverFactory_WriteLineChar(_this, "user XZEN", buffer, file);
-			return;
+			// Check if we are currently writing the "user" argument
+			if (ln.substr(0, 4) == "user")
+			{
+				HANDLE con = cmd.GetHandle();
+				SetConsoleTextAttribute(con, 2);
+				cmd << "Plugin: ";
+				SetConsoleTextAttribute(con, 10);
+				cmd << "Writing modified user argument.." << endl;
+				SetConsoleTextAttribute(con, 8);
+
+				// Write our own user-line
+				Ivk_zCArchiverFactory_WriteLineChar(_this, "user XZEN", buffer, file);
+			}
+			else
+			{
+				// Just write the line
+				Ivk_zCArchiverFactory_WriteLineChar(_this, line, buffer, file);
+			}
 		}
-
-		// Just write the line
-		Ivk_zCArchiverFactory_WriteLineChar(_this, line, buffer, file);
+		else
+		{
+			Ivk_zCArchiverFactory_WriteLineChar(_this, line, buffer, file);
+		}
 #endif
 	}
 

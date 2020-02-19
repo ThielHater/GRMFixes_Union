@@ -1,5 +1,8 @@
 // Supported with union (c) 2018 Union team
 
+// TODO
+#define GAME 1
+
 #ifndef __UNION_AFX_H__
 #define __UNION_AFX_H__
 

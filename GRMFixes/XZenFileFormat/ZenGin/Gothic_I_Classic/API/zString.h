@@ -65,7 +65,11 @@ namespace Gothic_I_Classic {
     zSTRING& operator += ( char const* )    zCall( 0x00644ED0 );
     zSTRING& operator =  ( char const* )    zCall( 0x004C5820 );
     zSTRING& operator =  ( zSTRING const& ) zCall( 0x0057E0C0 );
+#ifdef GAME
     char* ToChar() const                    zCall( 0x0045E2E0 );
+#else
+	char* ToChar() const                    zCall( 0x005E2EB0 );
+#endif
     void Clear()                            zCall( 0x0057E220 );
     bool IsEmpty() const                    zCall( 0x0073F440 );
     zSTRING& Lower()                        zCall( 0x00465280 );

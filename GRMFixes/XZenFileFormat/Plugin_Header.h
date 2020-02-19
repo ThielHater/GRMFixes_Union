@@ -4,8 +4,6 @@
 #include <map>
 #include <string>
 
-//#define GAME 1
-
 namespace NAMESPACE
 {
 #ifdef GAME
