@@ -61,7 +61,7 @@ namespace NAMESPACE
 	void __fastcall zCMusicSys_DirectMusic_PlayTheme(zCMusicSys_DirectMusic* _this, void* vtable, struct zCMusicTheme* theme, const float& volume, const zTMus_TransType& tr, const zTMus_TransSubType& trSub);
 	CInvoke<void(__thiscall*)(zCMusicSys_DirectMusic* _this, struct zCMusicTheme* theme, const float& volume, const zTMus_TransType& tr, const zTMus_TransSubType& trSub)> Ivk_zCMusicSys_DirectMusic_PlayTheme(0x004DC4E0, &zCMusicSys_DirectMusic_PlayTheme);
 
-	bool file_exist(const char* fileName)
+	bool FileExists(const char* fileName)
 	{
 		std::ifstream infile(fileName);
 		return infile.good();
@@ -303,7 +303,7 @@ namespace NAMESPACE
 			cmd << " using ";
 			SetConsoleTextAttribute(con, 10);
 
-			if (file_exist(wave))
+			if (FileExists(wave))
 			{
 				cmd << "Miles";
 
