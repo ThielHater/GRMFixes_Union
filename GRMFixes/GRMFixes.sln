@@ -15,6 +15,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ClimbingAngleFix", "Climbin
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MagicBarrierFix", "MagicBarrierFix\MagicBarrierFix.vcxproj", "{24632548-DFF7-400C-A046-CB4080C06930}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CloudGenerator", "CloudGenerator\CloudGenerator.vcxproj", "{88088DC1-FFFD-4869-8BB2-B25D5D260C3D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -149,6 +151,26 @@ Global
 		{24632548-DFF7-400C-A046-CB4080C06930}.G2A Release|x86.Build.0 = G2A Release|Win32
 		{24632548-DFF7-400C-A046-CB4080C06930}.Release|x86.ActiveCfg = Release|Win32
 		{24632548-DFF7-400C-A046-CB4080C06930}.Release|x86.Build.0 = Release|Win32
+		{88088DC1-FFFD-4869-8BB2-B25D5D260C3D}.Debug|x86.ActiveCfg = Debug|Win32
+		{88088DC1-FFFD-4869-8BB2-B25D5D260C3D}.Debug|x86.Build.0 = Debug|Win32
+		{88088DC1-FFFD-4869-8BB2-B25D5D260C3D}.G1 Debug|x86.ActiveCfg = G1 Debug|Win32
+		{88088DC1-FFFD-4869-8BB2-B25D5D260C3D}.G1 Debug|x86.Build.0 = G1 Debug|Win32
+		{88088DC1-FFFD-4869-8BB2-B25D5D260C3D}.G1 Release|x86.ActiveCfg = G1 Release|Win32
+		{88088DC1-FFFD-4869-8BB2-B25D5D260C3D}.G1 Release|x86.Build.0 = G1 Release|Win32
+		{88088DC1-FFFD-4869-8BB2-B25D5D260C3D}.G1A Debug|x86.ActiveCfg = G1A Debug|Win32
+		{88088DC1-FFFD-4869-8BB2-B25D5D260C3D}.G1A Debug|x86.Build.0 = G1A Debug|Win32
+		{88088DC1-FFFD-4869-8BB2-B25D5D260C3D}.G1A Release|x86.ActiveCfg = G1A Release|Win32
+		{88088DC1-FFFD-4869-8BB2-B25D5D260C3D}.G1A Release|x86.Build.0 = G1A Release|Win32
+		{88088DC1-FFFD-4869-8BB2-B25D5D260C3D}.G2 Debug|x86.ActiveCfg = G2 Debug|Win32
+		{88088DC1-FFFD-4869-8BB2-B25D5D260C3D}.G2 Debug|x86.Build.0 = G2 Debug|Win32
+		{88088DC1-FFFD-4869-8BB2-B25D5D260C3D}.G2 Release|x86.ActiveCfg = G2 Release|Win32
+		{88088DC1-FFFD-4869-8BB2-B25D5D260C3D}.G2 Release|x86.Build.0 = G2 Release|Win32
+		{88088DC1-FFFD-4869-8BB2-B25D5D260C3D}.G2A Debug|x86.ActiveCfg = G2A Debug|Win32
+		{88088DC1-FFFD-4869-8BB2-B25D5D260C3D}.G2A Debug|x86.Build.0 = G2A Debug|Win32
+		{88088DC1-FFFD-4869-8BB2-B25D5D260C3D}.G2A Release|x86.ActiveCfg = G2A Release|Win32
+		{88088DC1-FFFD-4869-8BB2-B25D5D260C3D}.G2A Release|x86.Build.0 = G2A Release|Win32
+		{88088DC1-FFFD-4869-8BB2-B25D5D260C3D}.Release|x86.ActiveCfg = Release|Win32
+		{88088DC1-FFFD-4869-8BB2-B25D5D260C3D}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
