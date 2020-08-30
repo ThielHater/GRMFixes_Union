@@ -14,6 +14,9 @@ WhiteNoiseGenerator::~WhiteNoiseGenerator()
 
 double* WhiteNoiseGenerator::GenerateNoise(int width, int height)
 {
+	if (noise != 0)
+		delete[] noise;
+
 	noiseWidth = width;
 	noiseHeight = height;
 	noise = new double[noiseWidth * noiseHeight];

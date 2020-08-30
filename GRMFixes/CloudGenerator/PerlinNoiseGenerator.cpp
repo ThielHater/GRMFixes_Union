@@ -12,6 +12,9 @@ PerlinNoiseGenerator::~PerlinNoiseGenerator()
 
 double* PerlinNoiseGenerator::GenerateNoise(int width, int height)
 {
+	if (noise != 0)
+		delete[] noise;
+
 	noise = new double[width * height];
 
 	FastNoise fastNoise;
@@ -24,6 +27,7 @@ double* PerlinNoiseGenerator::GenerateNoise(int width, int height)
 	fastNoise.SetFractalOctaves(7);
 	fastNoise.SetFractalLacunarity(2.0);
 	fastNoise.SetFractalGain(0.75);
+	fastNoise.SetSeed(rand());
 
 	for (int y = 0; y < height; y++)
 	{

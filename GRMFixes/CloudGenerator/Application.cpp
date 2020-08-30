@@ -12,6 +12,7 @@ void Game_Exit() {
 }
 
 void Game_Loop() {
+    NAMESPACE::AnalyzeHelper();
 }
 
 void Game_SaveBegin() {
@@ -69,7 +70,7 @@ void Game_DefineExternals() {
 
 // please disable unused functions.
 // write 'false' in 'Enabled' macro.
-#define AppDefault False
+#define AppDefault True
 CApplication* lpApplication = CApplication::CreateRefApplication (
   Enabled( AppDefault ) Game_Entry,
   Enabled( AppDefault ) Game_Init,

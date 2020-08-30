@@ -64,7 +64,7 @@ using namespace SystemPack;
 
 
 // gothic engine classes for g1, g1a, g2 and g2a
-#include "ZenGin\zGothicAPI.h"
+#include "..\ZenGin\zGothicAPI.h"
 
 
 

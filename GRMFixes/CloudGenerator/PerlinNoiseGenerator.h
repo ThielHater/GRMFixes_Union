@@ -2,6 +2,7 @@
 #include "INoiseGenerator.h"
 #include "FastNoise.h"
 #include <math.h>
+#include <cstdlib>
 
 class PerlinNoiseGenerator : public INoiseGenerator
 {

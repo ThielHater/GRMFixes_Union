@@ -6,6 +6,7 @@
 
 namespace NAMESPACE
 {
+	// TODO: in den Konstruktor von zCMaterial einhängen und für bestimmte Materials mal rndAlphaBlendFunc = zRND_ALPHA_FUNC_BLEND setzen
 	std::unordered_map<std::string, int> g_vobMapTwoPass = std::unordered_map<std::string, int>();
 	std::unordered_map<void*, bool> g_twoPassHelper = std::unordered_map<void*, bool>();
 	int g_vobRenderPass = 0;
