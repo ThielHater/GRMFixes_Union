@@ -1,5 +1,7 @@
 // Supported with union (c) 2018 Union team
 
+#define GAME 1
+
 #ifndef __UNION_AFX_H__
 #define __UNION_AFX_H__
 
@@ -7,7 +9,7 @@
 #define UNION_NO_WARNINGS
 #include ".build_settings.inl"
 
-
+#define NOMINMAX
 
 extern "C" {
   #include <Windows.h>
