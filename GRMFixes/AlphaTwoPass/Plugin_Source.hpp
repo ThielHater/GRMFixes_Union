@@ -6,9 +6,8 @@
 
 namespace NAMESPACE
 {
-	// TODO: in den Konstruktor von zCMaterial einhängen und für bestimmte Materials mal rndAlphaBlendFunc = zRND_ALPHA_FUNC_BLEND setzen
-	std::unordered_map<std::string, int> g_vobMapTwoPass = std::unordered_map<std::string, int>();
-	std::unordered_map<void*, bool> g_twoPassHelper = std::unordered_map<void*, bool>();
+	// TODO: VOBs in der Entfernung werden mit Alpha-Blending gerendert, mal untersuchen
+	std::set<std::string> g_vobMapTwoPass = std::set<std::string>();
 	int g_vobRenderPass = 0;
 	
 	// 0x007185C0 private: int __thiscall zCRnd_D3D::XD3D_SetRenderState(enum _D3DRENDERSTATETYPE,unsigned long)
@@ -46,7 +45,7 @@ namespace NAMESPACE
 		std::string line;
 		while (std::getline(file, line))
 		{
-			g_vobMapTwoPass[line] = 1;
+			g_vobMapTwoPass.insert(line);
 		}
 
 		SetConsoleTextAttribute(con, 2);
@@ -97,25 +96,8 @@ namespace NAMESPACE
 
 	int __fastcall zCVob_Render(zCVob* _this, struct zTRenderContext& ctx)
 	{
-		bool useTwoPass = false;
-		int result = 0;
-
-		auto it = g_twoPassHelper.find(_this);
-
-		if (it == g_twoPassHelper.end())
-		{
-			if (!g_vobMapTwoPass.empty() && _this->visual && _this->visual->objectName
-				&& g_vobMapTwoPass.find(_this->visual->objectName.ToChar()) != g_vobMapTwoPass.end())
-			{
-				useTwoPass = true;
-			}
-
-			g_twoPassHelper.insert(it, std::pair<void*, bool>(_this, useTwoPass));
-		}
-		else
-		{
-			useTwoPass = it->second;
-		}
+		int result = S_OK;
+		bool useTwoPass = _this->visual && _this->visual->objectName && g_vobMapTwoPass.find(_this->visual->objectName.ToChar()) != g_vobMapTwoPass.end();
 
 		g_vobRenderPass = 1;
 		result = Ivk_zCVob_Render(_this, ctx);
