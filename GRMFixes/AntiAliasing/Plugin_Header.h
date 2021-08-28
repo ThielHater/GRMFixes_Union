@@ -2,6 +2,7 @@
 // Multi-platform file can not have `#pragma once`!!!
 
 #include <math.h>
+#include <algorithm>
 
 namespace NAMESPACE
 {

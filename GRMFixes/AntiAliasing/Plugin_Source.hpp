@@ -39,119 +39,397 @@ namespace NAMESPACE
 	*/
 
 	// Idee 2: FXAA auf der CPU
-	IDirectDrawSurface7* fxaa = 0;
-	char* surfaceData = 0;
-	float* intensityCache = 0;
+	IDirectDrawSurface7* g_fxaa = 0;
+	float** g_intensityCache = 0;
+	int g_width = 0;
+	int g_height = 0;
+
+	zCOLOR ColorLerp(zCOLOR col1, zCOLOR col2, float t)
+	{
+		return zCOLOR(col1.r + t * (col2.r - col1.r), col1.g + t * (col2.g - col1.g), col1.b + t * (col2.b - col1.b));
+	}
+
+	zCOLOR GetPixel(LPDDSURFACEDESC2 ddsd, int y, int x)
+	{
+		x = std::clamp(x, 0, g_width - 1);
+		y = std::clamp(y, 0, g_height - 1);
+		int pixelWidth = (ddsd->ddpfPixelFormat.dwRGBBitCount / 8);
+		DWORD offset = y * ddsd->lPitch + x * pixelWidth;
+		D3DCOLOR color = *((LPDWORD)((DWORD)ddsd->lpSurface + offset));
+		zCOLOR result = zCOLOR(RGB_GETRED(color), RGB_GETGREEN(color), RGB_GETBLUE(color));
+		return result;
+	}
+
+	zCOLOR GetPixel(LPDDSURFACEDESC2 ddsd, zVEC2 vec)
+	{
+		zCOLOR color = GetPixel(ddsd, (int)vec[1], (int)vec[0]);
+		zCOLOR result = 0;
+
+		float offXMantissa = vec[0] - (int)vec[0];
+		float offYMantissa = vec[1] - (int)vec[1];
+
+		if (offXMantissa != 0.0F)
+		{
+			int offX = offXMantissa > 0 ? ceilf(offXMantissa) : floorf(offXMantissa);
+			zCOLOR colorX = GetPixel(ddsd, vec[1], (int)vec[0] + offX);
+			result = ColorLerp(color, colorX, fabs(offXMantissa));
+		}
+		else if (offYMantissa != 0.0F)
+		{
+			int offY = offYMantissa > 0 ? ceilf(offYMantissa) : floorf(offYMantissa);
+			zCOLOR colorY = GetPixel(ddsd, (int)vec[1] + offY, (int)vec[0]);
+			result = ColorLerp(color, colorY, fabs(offYMantissa));
+		}
+		else
+		{
+			result = color;
+		}
+
+		return result;
+	}
 
 	inline float GetIntensity(WORD red, WORD green, WORD blue)
 	{
-		float intens = (0.299F * red + 0.587F * green + 0.114F * blue);
-		return intens;
+		return (0.299F * (red / 256.0f) + 0.587F * (green / 256.0f) + 0.114F * (blue / 256.0f));
 	}
 
-	// 0x00717150 public: virtual void __thiscall zCRnd_D3D::EndFrame(void)
-	void __fastcall zCRnd_D3D_EndFrame(zCRnd_D3D* _this, void* vtable);
-	CInvoke<void(__thiscall*)(zCRnd_D3D * _this)> Ivk_zCRnd_D3D_EndFrame(GothicMemoryLocations::zCRnd_D3D::EndFrame, &zCRnd_D3D_EndFrame);
-
-	void __fastcall zCRnd_D3D_EndFrame(zCRnd_D3D* _this, void* vtable)
+	inline void SetCachedIntensity(int x, int y, zCOLOR color)
 	{
+		g_intensityCache[y][x] = GetIntensity(color.r, color.g, color.b);
+	}
+
+	inline float GetCachedIntensity(int y, int x)
+	{
+		x = std::clamp(x, 0, g_width - 1);
+		y = std::clamp(y, 0, g_height - 1);
+		return g_intensityCache[y][x];
+	}
+
+	float GetCachedIntensity(zVEC2 vec)
+	{
+		float intensity = GetCachedIntensity((int)vec[1], (int)vec[0]);
+		float intensityX = intensity;
+		float intensityY = intensity;
+
+		float offXMantissa = vec[0] - (int)vec[0];
+		float offYMantissa = vec[1] - (int)vec[1];
+
+		if (offXMantissa != 0.0F)
+		{
+			int offX = offXMantissa > 0 ? ceilf(offXMantissa) : floorf(offXMantissa);
+			intensityX = GetCachedIntensity((int)vec[1], (int)vec[0] + offX);
+		}
+		
+		if (offYMantissa != 0.0F)
+		{
+			int offY = offYMantissa > 0 ? ceilf(offYMantissa) : floorf(offYMantissa);
+			intensityY = GetCachedIntensity((int)vec[1] + offY, (int)vec[0]);
+		}
+		
+		float result = intensity + fabs(offXMantissa) * (intensityX - intensity) + fabs(offYMantissa) * (intensityY - intensity);
+		return result;
+	}
+
+	int g_ivanoSwitch = 0;
+
+	//0x0051D840 public: void __thiscall zCBspTree::Render(void)
+	void __fastcall zCBspTree_Render(zCBspTree* _this, void* vtable);
+	CInvoke<void(__thiscall*)(zCBspTree * _this)> Ivk_zCBspTree_Render(GothicMemoryLocations::zCBspTree::Render, &zCBspTree_Render);
+
+	void __fastcall zCBspTree_Render(zCBspTree* _this, void* vtable)
+	{
+		Ivk_zCBspTree_Render(_this);
+		//return;
+
+		//if (g_ivanoSwitch < 1)
+		//{
+		//	g_ivanoSwitch++;
+		//	Sleep(3000);
+		//	return;
+		//}
+		//else
+		//{
+		//	g_ivanoSwitch = 0;
+		//}
+
 		HRESULT hr = S_OK;
-		IDirectDrawSurface7* back_buffer = _this->xd3d_pfrontBuffer;
+		IDirectDrawSurface7* back_buffer = ((zCRnd_D3D*)zrenderer)->xd3d_pfrontBuffer;
 
 		DDSURFACEDESC2 ddsd;
 		ZeroMemory(&ddsd, sizeof(ddsd));
 		ddsd.dwSize = sizeof(DDSURFACEDESC2);
 
-		if (fxaa == 0 || fxaa->IsLost())
+		if (g_fxaa == NULL)
 		{
 			DDSURFACEDESC2 orig;
 			ZeroMemory(&orig, sizeof(orig));
 			orig.dwSize = sizeof(DDSURFACEDESC2);
 			back_buffer->GetSurfaceDesc(&orig);
+			g_width = orig.dwWidth;
+			g_height = orig.dwHeight;
 
 			ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT;
-			ddsd.dwWidth = orig.dwWidth;
-			ddsd.dwHeight = orig.dwHeight;
+			ddsd.dwWidth = g_width;
+			ddsd.dwHeight = g_height;
 
-			hr = _this->xd3d_pdd7->CreateSurface(&ddsd, &fxaa, NULL);
+			hr = ((zCRnd_D3D*)zrenderer)->xd3d_pdd7->CreateSurface(&ddsd, &g_fxaa, NULL);
 			if (hr != S_OK)
 			{
-				Ivk_zCRnd_D3D_EndFrame(_this);
 				return;
 			}
 		}
 
-		hr = fxaa->Blt(0, back_buffer, 0, DDBLT_WAIT, 0);
+		hr = g_fxaa->Blt(0, back_buffer, 0, DDBLT_WAIT, 0);
 		if (hr != S_OK)
 		{
-			Ivk_zCRnd_D3D_EndFrame(_this);
 			return;
 		}
 
-		fxaa->Lock(NULL, &ddsd, DDLOCK_NOSYSLOCK | DDLOCK_READONLY, NULL);
-
-		if (surfaceData == 0)
+		hr = g_fxaa->Lock(NULL, &ddsd, DDLOCK_NOSYSLOCK | DDLOCK_READONLY | DDLOCK_WAIT, NULL);
+		if (hr != S_OK)
 		{
-			surfaceData = new char[ddsd.dwHeight * ddsd.lPitch];
+			return;
 		}
 
-		//memcpy(surfaceData, ddsd.lpSurface, ddsd.dwHeight * ddsd.lPitch);
-
-		if (intensityCache == 0)
+		if (g_intensityCache == 0)
 		{
-			intensityCache = new float[ddsd.dwWidth * ddsd.dwHeight];
+			g_intensityCache = new float* [g_height];
+			for (int i = 0; i < g_height; ++i)
+				g_intensityCache[i] = new float[g_width];
 		}
 
-		int pixelWidth = (ddsd.ddpfPixelFormat.dwRGBBitCount / 8);
-
-		for (int x = 0; x < ddsd.dwWidth; x++)
+		for (int x = 0; x < g_width; x++)
 		{
-			for (int y = 0; y < ddsd.dwHeight; y++)
+			for (int y = 0; y < g_height; y++)
 			{
-				DWORD offset = y * ddsd.lPitch + x * pixelWidth;
-				D3DCOLOR color = *((LPDWORD)((DWORD)ddsd.lpSurface + offset)); // surfaceData <=> ddsd.lpSurface
-				intensityCache[y * ddsd.dwWidth + x] = GetIntensity(RGB_GETRED(color), RGB_GETGREEN(color), RGB_GETBLUE(color));
+				zCOLOR color = GetPixel(&ddsd, y, x);
+				SetCachedIntensity(x, y, color);
 			}
 		}
 
-		zCOLOR red = zCOLOR(255, 0, 0);
+		// http://blog.simonrodriguez.fr/articles/2016/07/implementing_fxaa.html
+		zCOLOR red = zCOLOR(255, 0, 0, 0);
+		float EDGE_THRESHOLD_MIN = 0.0312F * 4.0F;
+		float EDGE_THRESHOLD_MAX = 0.125F;
+		int ITERATIONS = 12;
+		float QUALITY[] = { 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.5F, 2.0F, 2.0F, 2.0F, 2.0F, 4.0F, 8.0F };
+		float SUBPIXEL_QUALITY = 0.75F;
 
-		for (int x = 1; x < ddsd.dwWidth - 1; x++)
+		for (int x = 1; x < g_width - 1; x++)
 		{
-			for (int y = 1; y < ddsd.dwHeight - 1; y++)
+			for (int y = 1; y < g_height - 1; y++)
 			{
-				// rgb2luma = GetIntensity / textureOffset = GetPixelColor
-				float lumaCenter = intensityCache[y * ddsd.dwWidth + x];
+				// Luma at the current fragment
+				float lumaCenter = GetCachedIntensity(y, x);
 
-				float lumaDown = intensityCache[(y - 1) * ddsd.dwWidth + x];
-				float lumaUp = intensityCache[(y + 1) * ddsd.dwWidth + x];
-				float lumaLeft = intensityCache[y * ddsd.dwWidth + (x - 1)];
-				float lumaRight = intensityCache[y * ddsd.dwWidth + (x + 1)];
+				// Luma at the four direct neighbours of the current fragment
+				float lumaDown = GetCachedIntensity(y - 1, x);
+				float lumaUp = GetCachedIntensity(y + 1, x);
+				float lumaLeft = GetCachedIntensity(y, x - 1);
+				float lumaRight = GetCachedIntensity(y, x + 1);
 
+				// Find the maximum and minimum luma around the current fragment
 				float lumaMin = fmin(lumaCenter, fmin(fmin(lumaDown, lumaUp), fmin(lumaLeft, lumaRight)));
 				float lumaMax = fmax(lumaCenter, fmax(fmax(lumaDown, lumaUp), fmax(lumaLeft, lumaRight)));
 
+				// Compute the delta
 				float lumaRange = lumaMax - lumaMin;
 
-				if (lumaRange > 32)
+				// If the luma variation is lower that a threshold (or if we are in a really dark area), we are not on an edge, don't perform any AA
+				if (lumaRange < fmax(EDGE_THRESHOLD_MIN, lumaMax * EDGE_THRESHOLD_MAX))
 				{
-					_this->SetPixel(x, y, red);
-					//SetPixelColor(x, y, red);
+					continue;
 				}
+
+				// Test pixel detection
+				//_this->SetPixel(x, y, red);
+				//continue;
+
+				// Query the 4 remaining corners lumas
+				float lumaDownLeft = GetCachedIntensity(y - 1, x - 1);
+				float lumaDownRight = GetCachedIntensity(y - 1, x + 1);
+				float lumaUpLeft = GetCachedIntensity(y + 1, x - 1);
+				float lumaUpRight = GetCachedIntensity(y + 1, x + 1);
+
+				// Combine the four edges lumas (using intermediary variables for future computations with the same values)
+				float lumaDownUp = lumaDown + lumaUp;
+				float lumaLeftRight = lumaLeft + lumaRight;
+
+				// Same for corners
+				float lumaLeftCorners = lumaDownLeft + lumaUpLeft;
+				float lumaDownCorners = lumaDownLeft + lumaDownRight;
+				float lumaRightCorners = lumaDownRight + lumaUpRight;
+				float lumaUpCorners = lumaUpRight + lumaUpLeft;
+
+				// Compute an estimation of the gradient along the horizontal and vertical axis
+				float edgeHorizontal = fabs(-2.0F * lumaLeft + lumaLeftCorners) + fabs(-2.0F * lumaCenter + lumaDownUp) * 2.0F + fabs(-2.0F * lumaRight + lumaRightCorners);
+				float edgeVertical = fabs(-2.0F * lumaUp + lumaUpCorners) + fabs(-2.0F * lumaCenter + lumaLeftRight) * 2.0F + fabs(-2.0F * lumaDown + lumaDownCorners);
+
+				// Is the local edge horizontal or vertical?
+				bool isHorizontal = (edgeHorizontal >= edgeVertical);
+
+				// Select the two neighboring texels lumas in the opposite direction to the local edge
+				float luma1 = isHorizontal ? lumaDown : lumaLeft;
+				float luma2 = isHorizontal ? lumaUp : lumaRight;
+
+				// Compute gradients in this direction
+				float gradient1 = luma1 - lumaCenter;
+				float gradient2 = luma2 - lumaCenter;
+
+				// Which direction is the steepest?
+				bool is1Steepest = fabs(gradient1) >= fabs(gradient2);
+
+				// Gradient in the corresponding direction, normalized
+				float gradientScaled = 0.25F * fmax(fabs(gradient1), fabs(gradient2));
+
+				// Choose the step size (one pixel) according to the edge direction
+				float stepLength = 1.0F;
+
+				// Average luma in the correct direction
+				float lumaLocalAverage = 0.0F;
+
+				if (is1Steepest)
+				{
+					// Switch the direction
+					stepLength = -stepLength;
+					lumaLocalAverage = 0.5F * (luma1 + lumaCenter);
+				}
+				else
+				{
+					lumaLocalAverage = 0.5F * (luma2 + lumaCenter);
+				}
+
+				// Shift UV in the correct direction by half a pixel
+				zVEC2 currentUv = zVEC2(x, y);
+				if (isHorizontal)
+					currentUv[1] += stepLength * 0.5F;
+				else
+					currentUv[0] += stepLength * 0.5F;
+
+				// Compute offset (for each iteration step) in the right direction
+				zVEC2 offset = isHorizontal ? zVEC2(1.0F, 0.0F) : zVEC2(0.0F, 1.0F);
+
+				// Compute UVs to explore on each side of the edge, orthogonally. The QUALITY allows us to step faster.
+				zVEC2 uv1 = currentUv - offset;
+				zVEC2 uv2 = currentUv + offset;
+
+				// Read the lumas at both current extremities of the exploration segment, and compute the delta wrt to the local average luma
+				float lumaEnd1 = GetCachedIntensity(uv1);
+				float lumaEnd2 = GetCachedIntensity(uv2);
+				lumaEnd1 -= lumaLocalAverage;
+				lumaEnd2 -= lumaLocalAverage;
+
+				// If the luma deltas at the current extremities are larger than the local gradient, we have reached the side of the edge
+				bool reached1 = fabs(lumaEnd1) >= gradientScaled;
+				bool reached2 = fabs(lumaEnd2) >= gradientScaled;
+				bool reachedBoth = reached1 && reached2;
+
+				// If the side is not reached, we continue to explore in this direction
+				if (!reached1)
+					uv1 -= offset;
+				if (!reached2)
+					uv2 += offset;
+
+				if (!reachedBoth)
+				{
+					for (int i = 2; i < ITERATIONS; i++)
+					{
+						// If needed, read luma in 1st direction, compute delta
+						if (!reached1)
+						{
+							lumaEnd1 = GetCachedIntensity(uv1);
+							lumaEnd1 = lumaEnd1 - lumaLocalAverage;
+						}
+
+						// If needed, read luma in opposite direction, compute delta
+						if (!reached2)
+						{
+							lumaEnd2 = GetCachedIntensity(uv2);
+							lumaEnd2 = lumaEnd2 - lumaLocalAverage;
+						}
+
+						// If the luma deltas at the current extremities is larger than the local gradient, we have reached the side of the edge
+						reached1 = fabs(lumaEnd1) >= gradientScaled;
+						reached2 = fabs(lumaEnd2) >= gradientScaled;
+						reachedBoth = reached1 && reached2;
+
+						// If the side is not reached, we continue to explore in this direction, with a variable quality
+						if (!reached1)
+							uv1 -= offset * QUALITY[i];
+						if (!reached2)
+							uv2 += offset * QUALITY[i];
+
+						// If both sides have been reached, stop the exploration
+						if (reachedBoth) { break; }
+					}
+				}
+
+				// Compute the distances to each extremity of the edge
+				float distance1 = isHorizontal ? (x - uv1[0]) : (y - uv1[1]);
+				float distance2 = isHorizontal ? (uv2[0] - x) : (uv2[1] - y);
+
+				// In which direction is the extremity of the edge closer?
+				bool isDirection1 = distance1 < distance2;
+				float distanceFinal = fmin(distance1, distance2);
+
+				// Length of the edge
+				float edgeThickness = (distance1 + distance2);
+
+				// UV offset: read in the direction of the closest side of the edge
+				float pixelOffset = (-distanceFinal / edgeThickness) + 0.5F;
+
+				// Is the luma at center smaller than the local average?
+				bool isLumaCenterSmaller = lumaCenter < lumaLocalAverage;
+
+				// If the luma at center is smaller than at its neighbour, the delta luma at each end should be positive (same variation)
+				// (In the direction of the closer side of the edge.)
+				bool correctVariation = ((isDirection1 ? lumaEnd1 : lumaEnd2) < 0.0F) != isLumaCenterSmaller;
+
+				// If the luma variation is incorrect, do not offset
+				float finalOffset = correctVariation ? pixelOffset : 0.0F;
+
+				// Sub-pixel shifting
+				// Full weighted average of the luma over the 3x3 neighborhood
+				float lumaAverage = (1.0F / 12.0F) * (2.0F * (lumaDownUp + lumaLeftRight) + lumaLeftCorners + lumaRightCorners);
+
+				// Ratio of the delta between the global average and the center luma, over the luma range in the 3x3 neighborhood
+				float subPixelOffset1 = std::clamp(fabs(lumaAverage - lumaCenter) / lumaRange, 0.0F, 1.0F);
+				float subPixelOffset2 = (-2.0F * subPixelOffset1 + 3.0F) * subPixelOffset1 * subPixelOffset1;
+
+				// Compute a sub-pixel offset based on this delta
+				float subPixelOffsetFinal = subPixelOffset2 * subPixelOffset2 * SUBPIXEL_QUALITY;
+
+				// Pick the biggest of the two offsets
+				finalOffset = fmax(finalOffset, subPixelOffsetFinal);
+
+				// Compute the final UV coordinates
+				zVEC2 finalUv = zVEC2(x, y);
+				if (isHorizontal)
+				{
+					finalUv[1] += finalOffset * stepLength;
+				}
+				else
+				{
+					finalUv[0] += finalOffset * stepLength;
+				}
+				
+				// Read the color at the new UV coordinates, and use it
+				zCOLOR finalColor = GetPixel(&ddsd, finalUv);
+
+				((zCRnd_D3D*)zrenderer)->SetPixel(x, y, finalColor);
 			}
 		}
 
-		fxaa->Unlock(NULL);
-
-		Ivk_zCRnd_D3D_EndFrame(_this);
+		g_fxaa->Unlock(NULL);
 	}
 
 	void ReleaseFxaaSurface()
 	{
-		if (fxaa != 0)
-			fxaa->Release();
-		delete surfaceData;
-		delete[] intensityCache;
+		if (g_fxaa != 0)
+			g_fxaa->Release();
+		for (int i = 0; i < g_height; ++i)
+			delete[] g_intensityCache[i];
+		delete[] g_intensityCache;
 	}
 
 	/*
