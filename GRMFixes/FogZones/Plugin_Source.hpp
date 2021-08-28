@@ -4,6 +4,8 @@
 
 #include "Plugin_Header.h"
 
+// TODO: Vorlage in zCSkyControler_Outdoor::CalcFog() und zCZoneZFog::ProcessZoneList()
+// TODO: Nebel in der Nacht sehr hell, dayWeight
 namespace NAMESPACE
 {
 	float g_farZ = 15000.0f;
@@ -87,6 +89,8 @@ namespace NAMESPACE
 				}
 			}
 
+			// TODO: sky->backgroundColor
+			// TODO: sky->fogColorDayVariations
 			// SkyStates zwischen denen interpoliert wird
 			const int maxSkyStates = 12;
 			struct mySkyState skyStates[maxSkyStates] =
@@ -147,7 +151,7 @@ namespace NAMESPACE
 					sumFogZoneWeight += zw;
 					countFogZones++;
 
-					// Sichweite aufaddieren
+					// Sichweite zuänachst aufaddieren
 					fogRange += GetActiveRange(zone, posCam, fogRangeDefault);
 				}
 			}
@@ -167,6 +171,7 @@ namespace NAMESPACE
 				fogRange = fogRange / countFogZones;
 			}
 
+			// TODO: sky->resultFogColor
 			// Farbe anwenden
 			if (sky->state0)
 				sky->state0->fogColor = fogColor;
@@ -182,6 +187,7 @@ namespace NAMESPACE
 	void __fastcall zCRnd_D3D_BeginFrame(zCRnd_D3D* _this, void* vtable);
 	CInvoke<void(__thiscall*)(zCRnd_D3D * _this)> Ivk_zCRnd_D3D_BeginFrame(GothicMemoryLocations::zCRnd_D3D::BeginFrame, &zCRnd_D3D_BeginFrame);
 
+	// TODO: virtual void ProcessZoneList( zCArraySort<zCZone*> const&, zCArraySort<zCZone*> const&, zCWorld* ) zCall( 0x0060C090 );
 	void __fastcall zCRnd_D3D_BeginFrame(zCRnd_D3D* _this, void* vtable)
 	{
 		SetFogColorAndRange();

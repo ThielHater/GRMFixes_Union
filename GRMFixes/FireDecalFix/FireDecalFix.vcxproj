@@ -43,11 +43,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{c0f98f75-8e35-48c0-9c95-74d666004dda}</ProjectGuid>
+    <ProjectGuid>{c9d1d1e9-baec-4263-9c6c-6b0df9428ccf}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>FogZones</RootNamespace>
+    <RootNamespace>FireDecalFix</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>FogZones</ProjectName>
+    <ProjectName>FireDecalFix</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

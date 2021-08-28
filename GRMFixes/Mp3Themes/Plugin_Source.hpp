@@ -4,6 +4,7 @@
 
 #include "Plugin_Header.h"
 
+// TODO: Reset der Transitions beim Laden eines Spielstandes
 namespace NAMESPACE
 {
 	/* Global variables */
