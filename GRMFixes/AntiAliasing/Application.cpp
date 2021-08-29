@@ -8,7 +8,7 @@ void Game_Init() {
 }
 
 void Game_Exit() {
-    NAMESPACE::ReleaseFxaaSurface();
+    NAMESPACE::Release();
 }
 
 void Game_Loop() {

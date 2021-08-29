@@ -40,30 +40,45 @@ namespace NAMESPACE
 
 	// Idee 2: FXAA auf der CPU
 	IDirectDrawSurface7* g_fxaa = 0;
+	std::mutex g_d3dMutex = std::mutex();
 	float** g_intensityCache = 0;
 	int g_width = 0;
 	int g_height = 0;
+	float EDGE_THRESHOLD_MIN = 0.0312F * 4.0F;
+	float EDGE_THRESHOLD_MAX = 0.125F;
+	int ITERATIONS = 12;
+	float QUALITY[] = { 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.5F, 2.0F, 2.0F, 2.0F, 2.0F, 4.0F, 8.0F };
+	float SUBPIXEL_QUALITY = 0.75F;
 
-	zCOLOR ColorLerp(zCOLOR col1, zCOLOR col2, float t)
+	inline D3DCOLOR ColorLerp(D3DCOLOR col1, D3DCOLOR col2, float t)
 	{
-		return zCOLOR(col1.r + t * (col2.r - col1.r), col1.g + t * (col2.g - col1.g), col1.b + t * (col2.b - col1.b));
+		BYTE r1 = RGB_GETRED(col1);
+		BYTE g1 = RGB_GETGREEN(col1);
+		BYTE b1 = RGB_GETBLUE(col1);
+		BYTE r2 = RGB_GETRED(col2);
+		BYTE g2 = RGB_GETGREEN(col2);
+		BYTE b2 = RGB_GETBLUE(col2);
+		BYTE r = r1 + t * (r2 - r1);
+		BYTE g = g1 + t * (g2 - g1);
+		BYTE b = b1 + t * (b2 - b1);
+		D3DCOLOR rgb = RGBA_MAKE(r, g, b, 255);
+		return rgb;
 	}
 
-	zCOLOR GetPixel(LPDDSURFACEDESC2 ddsd, int y, int x)
+	D3DCOLOR GetPixel(LPDDSURFACEDESC2 ddsd, int y, int x)
 	{
 		x = std::clamp(x, 0, g_width - 1);
 		y = std::clamp(y, 0, g_height - 1);
 		int pixelWidth = (ddsd->ddpfPixelFormat.dwRGBBitCount / 8);
 		DWORD offset = y * ddsd->lPitch + x * pixelWidth;
-		D3DCOLOR color = *((LPDWORD)((DWORD)ddsd->lpSurface + offset));
-		zCOLOR result = zCOLOR(RGB_GETRED(color), RGB_GETGREEN(color), RGB_GETBLUE(color));
+		D3DCOLOR result = *((LPDWORD)((DWORD)ddsd->lpSurface + offset));
 		return result;
 	}
 
-	zCOLOR GetPixel(LPDDSURFACEDESC2 ddsd, zVEC2 vec)
+	D3DCOLOR GetPixel(LPDDSURFACEDESC2 ddsd, zVEC2 vec)
 	{
-		zCOLOR color = GetPixel(ddsd, (int)vec[1], (int)vec[0]);
-		zCOLOR result = 0;
+		D3DCOLOR color = GetPixel(ddsd, (int)vec[1], (int)vec[0]);
+		D3DCOLOR result = 0;
 
 		float offXMantissa = vec[0] - (int)vec[0];
 		float offYMantissa = vec[1] - (int)vec[1];
@@ -71,13 +86,13 @@ namespace NAMESPACE
 		if (offXMantissa != 0.0F)
 		{
 			int offX = offXMantissa > 0 ? ceilf(offXMantissa) : floorf(offXMantissa);
-			zCOLOR colorX = GetPixel(ddsd, vec[1], (int)vec[0] + offX);
+			D3DCOLOR colorX = GetPixel(ddsd, vec[1], (int)vec[0] + offX);
 			result = ColorLerp(color, colorX, fabs(offXMantissa));
 		}
 		else if (offYMantissa != 0.0F)
 		{
 			int offY = offYMantissa > 0 ? ceilf(offYMantissa) : floorf(offYMantissa);
-			zCOLOR colorY = GetPixel(ddsd, (int)vec[1] + offY, (int)vec[0]);
+			D3DCOLOR colorY = GetPixel(ddsd, (int)vec[1] + offY, (int)vec[0]);
 			result = ColorLerp(color, colorY, fabs(offYMantissa));
 		}
 		else
@@ -88,14 +103,14 @@ namespace NAMESPACE
 		return result;
 	}
 
-	inline float GetIntensity(WORD red, WORD green, WORD blue)
+	inline float GetIntensity(BYTE red, BYTE green, BYTE blue)
 	{
 		return (0.299F * (red / 256.0f) + 0.587F * (green / 256.0f) + 0.114F * (blue / 256.0f));
 	}
 
-	inline void SetCachedIntensity(int x, int y, zCOLOR color)
+	inline void SetCachedIntensity(int x, int y, D3DCOLOR color)
 	{
-		g_intensityCache[y][x] = GetIntensity(color.r, color.g, color.b);
+		g_intensityCache[y][x] = GetIntensity(RGB_GETRED(color), RGB_GETGREEN(color), RGB_GETBLUE(color));
 	}
 
 	inline float GetCachedIntensity(int y, int x)
@@ -130,92 +145,21 @@ namespace NAMESPACE
 		return result;
 	}
 
-	int g_ivanoSwitch = 0;
-
-	//0x0051D840 public: void __thiscall zCBspTree::Render(void)
-	void __fastcall zCBspTree_Render(zCBspTree* _this, void* vtable);
-	CInvoke<void(__thiscall*)(zCBspTree * _this)> Ivk_zCBspTree_Render(GothicMemoryLocations::zCBspTree::Render, &zCBspTree_Render);
-
-	void __fastcall zCBspTree_Render(zCBspTree* _this, void* vtable)
+	void CalculateIntensityCache(LPDDSURFACEDESC2 ddsd, int threadId, int threadCount)
 	{
-		Ivk_zCBspTree_Render(_this);
-		//return;
-
-		//if (g_ivanoSwitch < 1)
-		//{
-		//	g_ivanoSwitch++;
-		//	Sleep(3000);
-		//	return;
-		//}
-		//else
-		//{
-		//	g_ivanoSwitch = 0;
-		//}
-
-		HRESULT hr = S_OK;
-		IDirectDrawSurface7* back_buffer = ((zCRnd_D3D*)zrenderer)->xd3d_pfrontBuffer;
-
-		DDSURFACEDESC2 ddsd;
-		ZeroMemory(&ddsd, sizeof(ddsd));
-		ddsd.dwSize = sizeof(DDSURFACEDESC2);
-
-		if (g_fxaa == NULL)
-		{
-			DDSURFACEDESC2 orig;
-			ZeroMemory(&orig, sizeof(orig));
-			orig.dwSize = sizeof(DDSURFACEDESC2);
-			back_buffer->GetSurfaceDesc(&orig);
-			g_width = orig.dwWidth;
-			g_height = orig.dwHeight;
-
-			ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT;
-			ddsd.dwWidth = g_width;
-			ddsd.dwHeight = g_height;
-
-			hr = ((zCRnd_D3D*)zrenderer)->xd3d_pdd7->CreateSurface(&ddsd, &g_fxaa, NULL);
-			if (hr != S_OK)
-			{
-				return;
-			}
-		}
-
-		hr = g_fxaa->Blt(0, back_buffer, 0, DDBLT_WAIT, 0);
-		if (hr != S_OK)
-		{
-			return;
-		}
-
-		hr = g_fxaa->Lock(NULL, &ddsd, DDLOCK_NOSYSLOCK | DDLOCK_READONLY | DDLOCK_WAIT, NULL);
-		if (hr != S_OK)
-		{
-			return;
-		}
-
-		if (g_intensityCache == 0)
-		{
-			g_intensityCache = new float* [g_height];
-			for (int i = 0; i < g_height; ++i)
-				g_intensityCache[i] = new float[g_width];
-		}
-
-		for (int x = 0; x < g_width; x++)
+		for (int x = threadId; x < g_width; x += threadCount)
 		{
 			for (int y = 0; y < g_height; y++)
 			{
-				zCOLOR color = GetPixel(&ddsd, y, x);
-				SetCachedIntensity(x, y, color);
+				SetCachedIntensity(x, y, GetPixel(ddsd, y, x));
 			}
 		}
+	}
 
-		// http://blog.simonrodriguez.fr/articles/2016/07/implementing_fxaa.html
-		zCOLOR red = zCOLOR(255, 0, 0, 0);
-		float EDGE_THRESHOLD_MIN = 0.0312F * 4.0F;
-		float EDGE_THRESHOLD_MAX = 0.125F;
-		int ITERATIONS = 12;
-		float QUALITY[] = { 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.5F, 2.0F, 2.0F, 2.0F, 2.0F, 4.0F, 8.0F };
-		float SUBPIXEL_QUALITY = 0.75F;
-
-		for (int x = 1; x < g_width - 1; x++)
+	// http://blog.simonrodriguez.fr/articles/2016/07/implementing_fxaa.html
+	void ApplyFxaa(LPDDSURFACEDESC2 ddsd, int threadId, int threadCount)
+	{
+		for (int x = threadId + 1; x < g_width - 1; x += threadCount)
 		{
 			for (int y = 1; y < g_height - 1; y++)
 			{
@@ -242,7 +186,7 @@ namespace NAMESPACE
 				}
 
 				// Test pixel detection
-				//_this->SetPixel(x, y, red);
+				//_this->SetPixel(x, y, zCOLOR(255, 0, 0, 0));
 				//continue;
 
 				// Query the 4 remaining corners lumas
@@ -405,25 +349,107 @@ namespace NAMESPACE
 				// Compute the final UV coordinates
 				zVEC2 finalUv = zVEC2(x, y);
 				if (isHorizontal)
-				{
 					finalUv[1] += finalOffset * stepLength;
-				}
 				else
-				{
 					finalUv[0] += finalOffset * stepLength;
-				}
-				
-				// Read the color at the new UV coordinates, and use it
-				zCOLOR finalColor = GetPixel(&ddsd, finalUv);
 
-				((zCRnd_D3D*)zrenderer)->SetPixel(x, y, finalColor);
+				// Read the color at the new UV coordinates, and use it
+				D3DCOLOR finalColor = GetPixel(ddsd, finalUv);
+
+				g_d3dMutex.lock();
+				((zCRnd_D3D*)zrenderer)->SetPixel(x, y, zCOLOR(RGB_GETRED(finalColor), RGB_GETGREEN(finalColor), RGB_GETBLUE(finalColor)));
+				g_d3dMutex.unlock();
 			}
 		}
+	}
+
+	int g_ivanoSwitch = 0;
+
+	//0x0051D840 public: void __thiscall zCBspTree::Render(void)
+	void __fastcall zCBspTree_Render(zCBspTree* _this, void* vtable);
+	CInvoke<void(__thiscall*)(zCBspTree * _this)> Ivk_zCBspTree_Render(GothicMemoryLocations::zCBspTree::Render, &zCBspTree_Render);
+
+	void __fastcall zCBspTree_Render(zCBspTree* _this, void* vtable)
+	{
+		Ivk_zCBspTree_Render(_this);
+		//return;
+
+		//if (g_ivanoSwitch < 1)
+		//{
+		//	g_ivanoSwitch++;
+		//	Sleep(3000);
+		//	return;
+		//}
+		//else
+		//{
+		//	g_ivanoSwitch = 0;
+		//}
+
+		HRESULT hr = S_OK;
+		IDirectDrawSurface7* back_buffer = ((zCRnd_D3D*)zrenderer)->xd3d_pfrontBuffer;
+
+		DDSURFACEDESC2 ddsd;
+		ZeroMemory(&ddsd, sizeof(ddsd));
+		ddsd.dwSize = sizeof(DDSURFACEDESC2);
+
+		if (g_fxaa == NULL)
+		{
+			DDSURFACEDESC2 orig;
+			ZeroMemory(&orig, sizeof(orig));
+			orig.dwSize = sizeof(DDSURFACEDESC2);
+			back_buffer->GetSurfaceDesc(&orig);
+			g_width = orig.dwWidth;
+			g_height = orig.dwHeight;
+
+			ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT;
+			ddsd.dwWidth = g_width;
+			ddsd.dwHeight = g_height;
+
+			hr = ((zCRnd_D3D*)zrenderer)->xd3d_pdd7->CreateSurface(&ddsd, &g_fxaa, NULL);
+			if (hr != S_OK)
+			{
+				return;
+			}
+		}
+
+		if (g_intensityCache == NULL)
+		{
+			g_intensityCache = new float* [g_height];
+			for (int i = 0; i < g_height; ++i)
+				g_intensityCache[i] = new float[g_width];
+		}
+
+		hr = g_fxaa->Blt(0, back_buffer, 0, DDBLT_WAIT, 0);
+		if (hr != S_OK)
+		{
+			return;
+		}
+
+		hr = g_fxaa->Lock(NULL, &ddsd, DDLOCK_NOSYSLOCK | DDLOCK_READONLY | DDLOCK_WAIT, NULL);
+		if (hr != S_OK)
+		{
+			return;
+		}
+
+		std::vector<std::thread> threads;
+		int threadNum = fmax(1, std::thread::hardware_concurrency() - 1);
+
+		for (int i = 0; i < threadNum; i++)
+			threads.push_back(std::thread(CalculateIntensityCache, &ddsd, i, threadNum));
+		for (auto& thread : threads)
+			thread.join();
+		threads.clear();
+		
+		for (int i = 0; i < threadNum; i++)
+			threads.push_back(std::thread(ApplyFxaa, &ddsd, i, threadNum));
+		for (auto& thread : threads)
+			thread.join();
+		threads.clear();
 
 		g_fxaa->Unlock(NULL);
 	}
 
-	void ReleaseFxaaSurface()
+	void Release()
 	{
 		if (g_fxaa != 0)
 			g_fxaa->Release();
