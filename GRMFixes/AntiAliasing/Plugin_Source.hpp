@@ -40,15 +40,17 @@ namespace NAMESPACE
 
 	// Idee 2: FXAA auf der CPU
 	IDirectDrawSurface7* g_fxaa = 0;
+	int g_threadNum = fmax(1, std::thread::hardware_concurrency() - 1);
 	std::mutex g_d3dMutex = std::mutex();
 	float** g_intensityCache = 0;
+	D3DCOLOR** g_threadBuffers = 0;
 	int g_width = 0;
 	int g_height = 0;
-	float EDGE_THRESHOLD_MIN = 0.0312F * 4.0F;
-	float EDGE_THRESHOLD_MAX = 0.125F;
-	int ITERATIONS = 12;
-	float QUALITY[] = { 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.5F, 2.0F, 2.0F, 2.0F, 2.0F, 4.0F, 8.0F };
-	float SUBPIXEL_QUALITY = 0.75F;
+	const float EDGE_THRESHOLD_MIN = 0.0312F * 4.0F;
+	const float EDGE_THRESHOLD_MAX = 0.125F;
+	const int ITERATIONS = 12;
+	const float QUALITY[] = { 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.5F, 2.0F, 2.0F, 2.0F, 2.0F, 4.0F, 8.0F };
+	const float SUBPIXEL_QUALITY = 0.75F;
 
 	inline D3DCOLOR ColorLerp(D3DCOLOR col1, D3DCOLOR col2, float t)
 	{
@@ -65,19 +67,18 @@ namespace NAMESPACE
 		return rgb;
 	}
 
-	D3DCOLOR GetPixel(LPDDSURFACEDESC2 ddsd, int y, int x)
+	D3DCOLOR* GetPixel(LPDDSURFACEDESC2 ddsd, int y, int x)
 	{
 		x = std::clamp(x, 0, g_width - 1);
 		y = std::clamp(y, 0, g_height - 1);
-		int pixelWidth = (ddsd->ddpfPixelFormat.dwRGBBitCount / 8);
-		DWORD offset = y * ddsd->lPitch + x * pixelWidth;
-		D3DCOLOR result = *((LPDWORD)((DWORD)ddsd->lpSurface + offset));
+		DWORD offset = y * ddsd->lPitch + x * 4;
+		D3DCOLOR* result = (D3DCOLOR*)((DWORD)ddsd->lpSurface + offset);
 		return result;
 	}
 
 	D3DCOLOR GetPixel(LPDDSURFACEDESC2 ddsd, zVEC2 vec)
 	{
-		D3DCOLOR color = GetPixel(ddsd, (int)vec[1], (int)vec[0]);
+		D3DCOLOR color = *GetPixel(ddsd, (int)vec[1], (int)vec[0]);
 		D3DCOLOR result = 0;
 
 		float offXMantissa = vec[0] - (int)vec[0];
@@ -86,13 +87,13 @@ namespace NAMESPACE
 		if (offXMantissa != 0.0F)
 		{
 			int offX = offXMantissa > 0 ? ceilf(offXMantissa) : floorf(offXMantissa);
-			D3DCOLOR colorX = GetPixel(ddsd, vec[1], (int)vec[0] + offX);
+			D3DCOLOR colorX = *GetPixel(ddsd, vec[1], (int)vec[0] + offX);
 			result = ColorLerp(color, colorX, fabs(offXMantissa));
 		}
 		else if (offYMantissa != 0.0F)
 		{
 			int offY = offYMantissa > 0 ? ceilf(offYMantissa) : floorf(offYMantissa);
-			D3DCOLOR colorY = GetPixel(ddsd, (int)vec[1] + offY, (int)vec[0]);
+			D3DCOLOR colorY = *GetPixel(ddsd, (int)vec[1] + offY, (int)vec[0]);
 			result = ColorLerp(color, colorY, fabs(offYMantissa));
 		}
 		else
@@ -147,11 +148,14 @@ namespace NAMESPACE
 
 	void CalculateIntensityCache(LPDDSURFACEDESC2 ddsd, int threadId, int threadCount)
 	{
-		for (int x = threadId; x < g_width; x += threadCount)
+		for (int y = threadId; y < g_height; y += threadCount)
 		{
-			for (int y = 0; y < g_height; y++)
+			D3DCOLOR* firstPixel = GetPixel(ddsd, y, 0);
+			memcpy(g_threadBuffers[threadId], firstPixel, g_width * sizeof(D3DCOLOR));
+
+			for (int x = 0; x < g_width; x++)
 			{
-				SetCachedIntensity(x, y, GetPixel(ddsd, y, x));
+				SetCachedIntensity(x, y, g_threadBuffers[threadId][x]);
 			}
 		}
 	}
@@ -159,9 +163,9 @@ namespace NAMESPACE
 	// http://blog.simonrodriguez.fr/articles/2016/07/implementing_fxaa.html
 	void ApplyFxaa(LPDDSURFACEDESC2 ddsd, int threadId, int threadCount)
 	{
-		for (int x = threadId + 1; x < g_width - 1; x += threadCount)
+		for (int y = threadId + 1; y < g_height - 1; y += threadCount)
 		{
-			for (int y = 1; y < g_height - 1; y++)
+			for (int x = 1; x < g_width - 1; x++)
 			{
 				// Luma at the current fragment
 				float lumaCenter = GetCachedIntensity(y, x);
@@ -363,8 +367,6 @@ namespace NAMESPACE
 		}
 	}
 
-	int g_ivanoSwitch = 0;
-
 	//0x0051D840 public: void __thiscall zCBspTree::Render(void)
 	void __fastcall zCBspTree_Render(zCBspTree* _this, void* vtable);
 	CInvoke<void(__thiscall*)(zCBspTree * _this)> Ivk_zCBspTree_Render(GothicMemoryLocations::zCBspTree::Render, &zCBspTree_Render);
@@ -372,18 +374,6 @@ namespace NAMESPACE
 	void __fastcall zCBspTree_Render(zCBspTree* _this, void* vtable)
 	{
 		Ivk_zCBspTree_Render(_this);
-		//return;
-
-		//if (g_ivanoSwitch < 1)
-		//{
-		//	g_ivanoSwitch++;
-		//	Sleep(3000);
-		//	return;
-		//}
-		//else
-		//{
-		//	g_ivanoSwitch = 0;
-		//}
 
 		HRESULT hr = S_OK;
 		IDirectDrawSurface7* back_buffer = ((zCRnd_D3D*)zrenderer)->xd3d_pfrontBuffer;
@@ -419,6 +409,15 @@ namespace NAMESPACE
 				g_intensityCache[i] = new float[g_width];
 		}
 
+		if (g_threadBuffers == NULL)
+		{
+			g_threadBuffers = new D3DCOLOR* [g_threadNum];
+			for (int i = 0; i < g_threadNum; ++i)
+				g_threadBuffers[i] = new D3DCOLOR[g_width];
+		}
+
+		auto t1 = std::chrono::high_resolution_clock::now();
+
 		hr = g_fxaa->Blt(0, back_buffer, 0, DDBLT_WAIT, 0);
 		if (hr != S_OK)
 		{
@@ -432,19 +431,23 @@ namespace NAMESPACE
 		}
 
 		std::vector<std::thread> threads;
-		int threadNum = fmax(1, std::thread::hardware_concurrency() - 1);
 
-		for (int i = 0; i < threadNum; i++)
-			threads.push_back(std::thread(CalculateIntensityCache, &ddsd, i, threadNum));
+		for (int i = 0; i < g_threadNum; i++)
+			threads.push_back(std::thread(CalculateIntensityCache, &ddsd, i, g_threadNum));
 		for (auto& thread : threads)
 			thread.join();
 		threads.clear();
 		
-		for (int i = 0; i < threadNum; i++)
-			threads.push_back(std::thread(ApplyFxaa, &ddsd, i, threadNum));
+		for (int i = 0; i < g_threadNum; i++)
+			threads.push_back(std::thread(ApplyFxaa, &ddsd, i, g_threadNum));
 		for (auto& thread : threads)
 			thread.join();
 		threads.clear();
+
+		auto t2 = std::chrono::high_resolution_clock::now();
+
+		auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
+		std::cout << ms_int.count() << " ms\n";
 
 		g_fxaa->Unlock(NULL);
 	}
@@ -456,6 +459,9 @@ namespace NAMESPACE
 		for (int i = 0; i < g_height; ++i)
 			delete[] g_intensityCache[i];
 		delete[] g_intensityCache;
+		for (int i = 0; i < g_threadNum; ++i)
+			delete[] g_threadBuffers[i];
+		delete[] g_threadBuffers;
 	}
 
 	/*

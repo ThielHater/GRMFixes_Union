@@ -7,6 +7,7 @@
 #include <vector>
 #include <thread>
 #include <mutex>
+#include <chrono>
 
 namespace NAMESPACE
 {
