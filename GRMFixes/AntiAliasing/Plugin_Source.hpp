@@ -41,16 +41,29 @@ namespace NAMESPACE
 	// Idee 2: FXAA auf der CPU
 	IDirectDrawSurface7* g_fxaa = 0;
 	int g_threadNum = fmax(1, std::thread::hardware_concurrency() - 1);
-	std::mutex g_d3dMutex = std::mutex();
+	CRITICAL_SECTION g_d3dCritSec;
 	float** g_intensityCache = 0;
 	D3DCOLOR** g_threadBuffers = 0;
 	int g_width = 0;
 	int g_height = 0;
-	const float EDGE_THRESHOLD_MIN = 0.0312F * 4.0F;
-	const float EDGE_THRESHOLD_MAX = 0.125F;
+	const float EDGE_THRESHOLD = 0.125F;
 	const int ITERATIONS = 12;
 	const float QUALITY[] = { 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.5F, 2.0F, 2.0F, 2.0F, 2.0F, 4.0F, 8.0F };
 	const float SUBPIXEL_QUALITY = 0.75F;
+
+	inline float max(float a, float b)
+	{
+		if (a > b)
+			return a;
+		return b;
+	}
+
+	inline float min(float a, float b)
+	{
+		if (a < b)
+			return a;
+		return b;
+	}
 
 	inline D3DCOLOR ColorLerp(D3DCOLOR col1, D3DCOLOR col2, float t)
 	{
@@ -116,8 +129,14 @@ namespace NAMESPACE
 
 	inline float GetCachedIntensity(int y, int x)
 	{
-		x = std::clamp(x, 0, g_width - 1);
-		y = std::clamp(y, 0, g_height - 1);
+		if (x < 0)
+			x = 0;
+		if (y < 0)
+			y = 0;
+		if (x >= g_width)
+			x = g_width - 1;
+		if (y >= g_height)
+			y = g_height - 1;
 		return g_intensityCache[y][x];
 	}
 
@@ -177,14 +196,14 @@ namespace NAMESPACE
 				float lumaRight = GetCachedIntensity(y, x + 1);
 
 				// Find the maximum and minimum luma around the current fragment
-				float lumaMin = fmin(lumaCenter, fmin(fmin(lumaDown, lumaUp), fmin(lumaLeft, lumaRight)));
-				float lumaMax = fmax(lumaCenter, fmax(fmax(lumaDown, lumaUp), fmax(lumaLeft, lumaRight)));
+				float lumaMin = min(lumaCenter, min(min(lumaDown, lumaUp), min(lumaLeft, lumaRight)));
+				float lumaMax = max(lumaCenter, max(max(lumaDown, lumaUp), max(lumaLeft, lumaRight)));
 
 				// Compute the delta
 				float lumaRange = lumaMax - lumaMin;
 
 				// If the luma variation is lower that a threshold (or if we are in a really dark area), we are not on an edge, don't perform any AA
-				if (lumaRange < fmax(EDGE_THRESHOLD_MIN, lumaMax * EDGE_THRESHOLD_MAX))
+				if (lumaRange < EDGE_THRESHOLD)
 				{
 					continue;
 				}
@@ -228,7 +247,7 @@ namespace NAMESPACE
 				bool is1Steepest = fabs(gradient1) >= fabs(gradient2);
 
 				// Gradient in the corresponding direction, normalized
-				float gradientScaled = 0.25F * fmax(fabs(gradient1), fabs(gradient2));
+				float gradientScaled = 0.25F * max(fabs(gradient1), fabs(gradient2));
 
 				// Choose the step size (one pixel) according to the edge direction
 				float stepLength = 1.0F;
@@ -318,7 +337,7 @@ namespace NAMESPACE
 
 				// In which direction is the extremity of the edge closer?
 				bool isDirection1 = distance1 < distance2;
-				float distanceFinal = fmin(distance1, distance2);
+				float distanceFinal = min(distance1, distance2);
 
 				// Length of the edge
 				float edgeThickness = (distance1 + distance2);
@@ -348,7 +367,7 @@ namespace NAMESPACE
 				float subPixelOffsetFinal = subPixelOffset2 * subPixelOffset2 * SUBPIXEL_QUALITY;
 
 				// Pick the biggest of the two offsets
-				finalOffset = fmax(finalOffset, subPixelOffsetFinal);
+				finalOffset = max(finalOffset, subPixelOffsetFinal);
 
 				// Compute the final UV coordinates
 				zVEC2 finalUv = zVEC2(x, y);
@@ -360,9 +379,9 @@ namespace NAMESPACE
 				// Read the color at the new UV coordinates, and use it
 				D3DCOLOR finalColor = GetPixel(ddsd, finalUv);
 
-				g_d3dMutex.lock();
+				EnterCriticalSection(&g_d3dCritSec);
 				((zCRnd_D3D*)zrenderer)->SetPixel(x, y, zCOLOR(RGB_GETRED(finalColor), RGB_GETGREEN(finalColor), RGB_GETBLUE(finalColor)));
-				g_d3dMutex.unlock();
+				LeaveCriticalSection(&g_d3dCritSec);
 			}
 		}
 	}
@@ -400,6 +419,8 @@ namespace NAMESPACE
 			{
 				return;
 			}
+
+			InitializeCriticalSection(&g_d3dCritSec);
 		}
 
 		if (g_intensityCache == NULL)
@@ -462,6 +483,7 @@ namespace NAMESPACE
 		for (int i = 0; i < g_threadNum; ++i)
 			delete[] g_threadBuffers[i];
 		delete[] g_threadBuffers;
+		DeleteCriticalSection(&g_d3dCritSec);
 	}
 
 	/*
