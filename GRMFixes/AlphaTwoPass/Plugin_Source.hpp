@@ -6,21 +6,7 @@
 
 namespace NAMESPACE
 {
-	// TODO: VOBs in der Entfernung werden mit Alpha-Blending gerendert, mal untersuchen
 	std::set<std::string> g_vobMapTwoPass = std::set<std::string>();
-	int g_vobRenderPass = 0;
-	
-	// 0x007185C0 private: int __thiscall zCRnd_D3D::XD3D_SetRenderState(enum _D3DRENDERSTATETYPE,unsigned long)
-	int __fastcall zCRnd_D3D_XD3D_SetRenderState(zCRnd_D3D* _this, void* vtable, D3DRENDERSTATETYPE state, DWORD value);
-	CInvoke<int(__thiscall*)(zCRnd_D3D* _this, D3DRENDERSTATETYPE state, DWORD value)> Ivk_zCRnd_D3D_XD3D_SetRenderState(GothicMemoryLocations::zCRnd_D3D::XD3D_SetRenderState, &zCRnd_D3D_XD3D_SetRenderState);
-
-	// 0x005C8860 public: virtual int __thiscall zCTexture::HasAlpha(void)
-	int __fastcall zCTexture_HasAlpha(zCTexture* _this, void* vtable);
-	CInvoke<int(__thiscall*)(zCTexture* _this)> Ivk_zCTexture_HasAlpha(GothicMemoryLocations::zCTexture::HasAlpha, &zCTexture_HasAlpha);
-
-	// 0x005D6090 public: virtual int __fastcall zCVob::Render(struct zTRenderContext &)
-	int __fastcall zCVob_Render(zCVob* _this, struct zTRenderContext& ctx);
-	CInvoke<int(__fastcall*)(zCVob* _this, struct zTRenderContext& ctx)> Ivk_zCVob_Render(GothicMemoryLocations::zCVob::Render, &zCVob_Render);
 
 	void ReadAlphaTwoPassFile()
 	{
@@ -58,57 +44,50 @@ namespace NAMESPACE
 		SetConsoleTextAttribute(con, 8);
 	}
 
-	int __fastcall zCRnd_D3D_XD3D_SetRenderState(zCRnd_D3D* _this, void* vtable, D3DRENDERSTATETYPE state, DWORD value)
+	// 0x005D5F60 public: void __thiscall zCVob::CalcRenderAlpha(float,class zCVisual * &,float &)
+	void __fastcall zCVob_CalcRenderAlpha(zCVob* _this, void* vtable, const zREAL distVobToCam, zCVisual*& activeVisual, zREAL& alpha);
+	CInvoke<void(__thiscall*)(zCVob* _this, const zREAL distVobToCam, zCVisual*& activeVisual, zREAL& alpha)> Ivk_zCVob_CalcRenderAlpha(GothicMemoryLocations::zCVob::CalcRenderAlpha, &zCVob_CalcRenderAlpha);
+
+	void __fastcall zCVob_CalcRenderAlpha(zCVob* _this, void* vtable, const zREAL distVobToCam, zCVisual*& activeVisual, zREAL& alpha)
 	{
-		Ivk_zCRnd_D3D_XD3D_SetRenderState(_this, state, value);
+		Ivk_zCVob_CalcRenderAlpha(_this, distVobToCam, activeVisual, alpha);
 
-		// Two Pass Rendering Technique (https://blogs.msdn.microsoft.com/shawnhar/2009/02/18/depth-sorting-alpha-blended-objects/)
-		if (g_vobRenderPass == 1)
+		if (activeVisual && activeVisual->objectName && g_vobMapTwoPass.find(activeVisual->objectName.ToChar()) != g_vobMapTwoPass.end())
 		{
-			Ivk_zCRnd_D3D_XD3D_SetRenderState(_this, D3DRENDERSTATETYPE::D3DRENDERSTATE_ALPHATESTENABLE, true);
-			Ivk_zCRnd_D3D_XD3D_SetRenderState(_this, D3DRENDERSTATETYPE::D3DRENDERSTATE_ALPHAFUNC, D3DCMP_GREATEREQUAL);
-			Ivk_zCRnd_D3D_XD3D_SetRenderState(_this, D3DRENDERSTATETYPE::D3DRENDERSTATE_ALPHAREF, 160);
-			Ivk_zCRnd_D3D_XD3D_SetRenderState(_this, D3DRENDERSTATETYPE::D3DRENDERSTATE_ALPHABLENDENABLE, false);
-			Ivk_zCRnd_D3D_XD3D_SetRenderState(_this, D3DRENDERSTATETYPE::D3DRENDERSTATE_ZENABLE, true);
+			if (alpha == 1.0f)
+				alpha = 0.99f;
 		}
-		else if (g_vobRenderPass == 2)
-		{
-			Ivk_zCRnd_D3D_XD3D_SetRenderState(_this, D3DRENDERSTATETYPE::D3DRENDERSTATE_ALPHATESTENABLE, true);
-			Ivk_zCRnd_D3D_XD3D_SetRenderState(_this, D3DRENDERSTATETYPE::D3DRENDERSTATE_ALPHAFUNC, D3DCMP_LESS);
-			Ivk_zCRnd_D3D_XD3D_SetRenderState(_this, D3DRENDERSTATETYPE::D3DRENDERSTATE_ALPHAREF, 160);
-			Ivk_zCRnd_D3D_XD3D_SetRenderState(_this, D3DRENDERSTATETYPE::D3DRENDERSTATE_ALPHABLENDENABLE, true);
-			Ivk_zCRnd_D3D_XD3D_SetRenderState(_this, D3DRENDERSTATETYPE::D3DRENDERSTATE_SRCBLEND, D3DBLEND_SRCALPHA);
-			Ivk_zCRnd_D3D_XD3D_SetRenderState(_this, D3DRENDERSTATETYPE::D3DRENDERSTATE_DESTBLEND, D3DBLEND_INVSRCALPHA);
-			Ivk_zCRnd_D3D_XD3D_SetRenderState(_this, D3DRENDERSTATETYPE::D3DRENDERSTATE_ZENABLE, true);
-			Ivk_zCRnd_D3D_XD3D_SetRenderState(_this, D3DRENDERSTATETYPE::D3DRENDERSTATE_ZWRITEENABLE, false);
-		}
-
-		return S_OK;
 	}
 	
-	int __fastcall zCTexture_HasAlpha(zCTexture* _this, void* vtable)
+	// 0x005B2A50 public: void __fastcall zCRenderManager::DrawVertexBuffer(class zCVertexBuffer *,int,int,unsigned short *,unsigned long,class zCMaterial *)
+	void __fastcall zCRenderManager_DrawVertexBuffer(zCRenderManager* _this, class zCVertexBuffer* vertexBufferIn, int firstVert, int numVert, zWORD* indexList, zDWORD numIndex, class zCMaterial* material);
+	CInvoke<void(__fastcall*)(zCRenderManager* _this, class zCVertexBuffer* vertexBufferIn, int firstVert, int numVert, zWORD* indexList, zDWORD numIndex, class zCMaterial* material)> Ivk_zCRenderManager_DrawVertexBuffer(GothicMemoryLocations::zCRenderManager::DrawVertexBuffer, &zCRenderManager_DrawVertexBuffer);
+
+	void __fastcall zCRenderManager_DrawVertexBuffer(zCRenderManager* _this, class zCVertexBuffer* vertexBufferIn, int firstVert, int numVert, zWORD* indexList, zDWORD numIndex, class zCMaterial* material)
 	{
-		if (g_vobRenderPass > 0)
-			return 1;
-		else
-			return Ivk_zCTexture_HasAlpha(_this);
-	}
-
-	int __fastcall zCVob_Render(zCVob* _this, struct zTRenderContext& ctx)
-	{
-		int result = S_OK;
-		bool useTwoPass = _this->visual && _this->visual->objectName && g_vobMapTwoPass.find(_this->visual->objectName.ToChar()) != g_vobMapTwoPass.end();
-
-		g_vobRenderPass = 1;
-		result = Ivk_zCVob_Render(_this, ctx);
-
-		if (useTwoPass)
+		zTRnd_AlphaBlendFunc alphaFunc = _this->overrideAlphaBlendFunc;
+		
+		if (_this->overrideAlphaBlendFunc == zRND_ALPHA_FUNC_BLEND && material->texture)
 		{
-			g_vobRenderPass = 2;
-			result = Ivk_zCVob_Render(_this, ctx);
+			if (material->texture->hasAlpha)
+			{
+				// Two Pass Rendering Technique (https://blogs.msdn.microsoft.com/shawnhar/2009/02/18/depth-sorting-alpha-blended-objects/)
+				_this->overrideAlphaBlendFunc = zRND_ALPHA_FUNC_BLEND;
+				Ivk_zCRenderManager_DrawVertexBuffer(_this, vertexBufferIn, firstVert, numVert, indexList, numIndex, material);
+				_this->overrideAlphaBlendFunc = zRND_ALPHA_FUNC_TEST;
+				Ivk_zCRenderManager_DrawVertexBuffer(_this, vertexBufferIn, firstVert, numVert, indexList, numIndex, material);
+			}
+			else
+			{
+				_this->overrideAlphaBlendFunc = zRND_ALPHA_FUNC_NONE;
+				Ivk_zCRenderManager_DrawVertexBuffer(_this, vertexBufferIn, firstVert, numVert, indexList, numIndex, material);
+			}	
+		}
+		else
+		{
+			Ivk_zCRenderManager_DrawVertexBuffer(_this, vertexBufferIn, firstVert, numVert, indexList, numIndex, material);
 		}
 
-		g_vobRenderPass = 0;
-		return result;
+		_this->overrideAlphaBlendFunc = alphaFunc;
 	}
 }
