@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.28803.156
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33213.308
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XZenFileFormat", "XZenFileFormat\XZenFileFormat.vcxproj", "{8E5E7C21-DD3F-43E1-ADF9-5D9DA44F5BD2}"
 EndProject
@@ -20,6 +20,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FogZones", "FogZones\FogZones.vcxproj", "{C0F98F75-8E35-48C0-9C95-74D666004DDA}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AntiAliasing", "AntiAliasing\AntiAliasing.vcxproj", "{B16D0E0D-B581-4CC4-8A36-6B05B3ED5444}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AnimatedStartscreen", "AnimatedStartscreen\AnimatedStartscreen.vcxproj", "{B7D1203E-A1D2-42C8-BE3F-61D4DCF861E3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -215,6 +217,26 @@ Global
 		{B16D0E0D-B581-4CC4-8A36-6B05B3ED5444}.G2A Release|x86.Build.0 = G2A Release|Win32
 		{B16D0E0D-B581-4CC4-8A36-6B05B3ED5444}.Release|x86.ActiveCfg = Release|Win32
 		{B16D0E0D-B581-4CC4-8A36-6B05B3ED5444}.Release|x86.Build.0 = Release|Win32
+		{B7D1203E-A1D2-42C8-BE3F-61D4DCF861E3}.Debug|x86.ActiveCfg = Debug|Win32
+		{B7D1203E-A1D2-42C8-BE3F-61D4DCF861E3}.Debug|x86.Build.0 = Debug|Win32
+		{B7D1203E-A1D2-42C8-BE3F-61D4DCF861E3}.G1 Debug|x86.ActiveCfg = G1 Debug|Win32
+		{B7D1203E-A1D2-42C8-BE3F-61D4DCF861E3}.G1 Debug|x86.Build.0 = G1 Debug|Win32
+		{B7D1203E-A1D2-42C8-BE3F-61D4DCF861E3}.G1 Release|x86.ActiveCfg = G1 Release|Win32
+		{B7D1203E-A1D2-42C8-BE3F-61D4DCF861E3}.G1 Release|x86.Build.0 = G1 Release|Win32
+		{B7D1203E-A1D2-42C8-BE3F-61D4DCF861E3}.G1A Debug|x86.ActiveCfg = G1A Debug|Win32
+		{B7D1203E-A1D2-42C8-BE3F-61D4DCF861E3}.G1A Debug|x86.Build.0 = G1A Debug|Win32
+		{B7D1203E-A1D2-42C8-BE3F-61D4DCF861E3}.G1A Release|x86.ActiveCfg = G1A Release|Win32
+		{B7D1203E-A1D2-42C8-BE3F-61D4DCF861E3}.G1A Release|x86.Build.0 = G1A Release|Win32
+		{B7D1203E-A1D2-42C8-BE3F-61D4DCF861E3}.G2 Debug|x86.ActiveCfg = G2 Debug|Win32
+		{B7D1203E-A1D2-42C8-BE3F-61D4DCF861E3}.G2 Debug|x86.Build.0 = G2 Debug|Win32
+		{B7D1203E-A1D2-42C8-BE3F-61D4DCF861E3}.G2 Release|x86.ActiveCfg = G2 Release|Win32
+		{B7D1203E-A1D2-42C8-BE3F-61D4DCF861E3}.G2 Release|x86.Build.0 = G2 Release|Win32
+		{B7D1203E-A1D2-42C8-BE3F-61D4DCF861E3}.G2A Debug|x86.ActiveCfg = G2A Debug|Win32
+		{B7D1203E-A1D2-42C8-BE3F-61D4DCF861E3}.G2A Debug|x86.Build.0 = G2A Debug|Win32
+		{B7D1203E-A1D2-42C8-BE3F-61D4DCF861E3}.G2A Release|x86.ActiveCfg = G2A Release|Win32
+		{B7D1203E-A1D2-42C8-BE3F-61D4DCF861E3}.G2A Release|x86.Build.0 = G2A Release|Win32
+		{B7D1203E-A1D2-42C8-BE3F-61D4DCF861E3}.Release|x86.ActiveCfg = Release|Win32
+		{B7D1203E-A1D2-42C8-BE3F-61D4DCF861E3}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

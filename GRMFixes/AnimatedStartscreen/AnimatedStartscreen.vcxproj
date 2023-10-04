@@ -43,11 +43,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{1ec45c3b-c46f-4d59-b3f4-f93062208f1d}</ProjectGuid>
+    <ProjectGuid>{B7D1203E-A1D2-42C8-BE3F-61D4DCF861E3}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>AlphaTwoPass</RootNamespace>
+    <RootNamespace>AnimatedStartscreen</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>AlphaTwoPass</ProjectName>
+    <ProjectName>AnimatedStartscreen</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -151,62 +151,62 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>C:\Program Files (x86)\Gothic\system\</OutDir>
+    <OutDir>$(SolutionDir)Bin\</OutDir>
     <IncludePath>$(SolutionDir)\$(ProjectName)\;$(ALLUSERSPROFILE)\Union\SDK\Union\v1.0f\Include\;$(ALLUSERSPROFILE)\Union\SDK\DirectX7\include\;$(IncludePath)</IncludePath>
     <LibraryPath>$(ALLUSERSPROFILE)\Union\SDK\Union\v1.0f\Lib\;$(ALLUSERSPROFILE)\Union\SDK\DirectX7\Lib\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='G2A Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>C:\Program Files (x86)\Gothic\system\</OutDir>
+    <OutDir>$(SolutionDir)Bin\</OutDir>
     <IncludePath>$(SolutionDir)\$(ProjectName)\;$(ALLUSERSPROFILE)\Union\SDK\Union\v1.0f\Include\;$(ALLUSERSPROFILE)\Union\SDK\DirectX7\include\;$(IncludePath)</IncludePath>
     <LibraryPath>$(ALLUSERSPROFILE)\Union\SDK\Union\v1.0f\Lib\;$(ALLUSERSPROFILE)\Union\SDK\DirectX7\Lib\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='G2 Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>C:\Program Files (x86)\Gothic\system\</OutDir>
+    <OutDir>$(SolutionDir)Bin\</OutDir>
     <IncludePath>$(SolutionDir)\$(ProjectName)\;$(ALLUSERSPROFILE)\Union\SDK\Union\v1.0f\Include\;$(ALLUSERSPROFILE)\Union\SDK\DirectX7\include\;$(IncludePath)</IncludePath>
     <LibraryPath>$(ALLUSERSPROFILE)\Union\SDK\Union\v1.0f\Lib\;$(ALLUSERSPROFILE)\Union\SDK\DirectX7\Lib\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='G1A Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>C:\Program Files (x86)\Gothic\system\</OutDir>
+    <OutDir>$(SolutionDir)Bin\</OutDir>
     <IncludePath>$(SolutionDir)\$(ProjectName)\;$(ALLUSERSPROFILE)\Union\SDK\Union\v1.0f\Include\;$(ALLUSERSPROFILE)\Union\SDK\DirectX7\include\;$(IncludePath)</IncludePath>
     <LibraryPath>$(ALLUSERSPROFILE)\Union\SDK\Union\v1.0f\Lib\;$(ALLUSERSPROFILE)\Union\SDK\DirectX7\Lib\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='G1 Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>C:\Program Files (x86)\Gothic\system\</OutDir>
+    <OutDir>C:\Gothic\system\</OutDir>
     <IncludePath>$(SolutionDir)\$(ProjectName)\;$(ALLUSERSPROFILE)\Union\SDK\Union\v1.0f\Include\;$(ALLUSERSPROFILE)\Union\SDK\DirectX7\include\;$(IncludePath)</IncludePath>
     <LibraryPath>$(ALLUSERSPROFILE)\Union\SDK\Union\v1.0f\Lib\;$(ALLUSERSPROFILE)\Union\SDK\DirectX7\Lib\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>C:\Program Files (x86)\Gothic\system\</OutDir>
+    <OutDir>$(SolutionDir)Bin\</OutDir>
     <IncludePath>$(SolutionDir)\$(ProjectName)\;$(ALLUSERSPROFILE)\Union\SDK\Union\v1.0f\Include\;$(ALLUSERSPROFILE)\Union\SDK\DirectX7\include\;$(IncludePath)</IncludePath>
     <LibraryPath>$(ALLUSERSPROFILE)\Union\SDK\Union\v1.0f\Lib\;$(ALLUSERSPROFILE)\Union\SDK\DirectX7\Lib\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='G2A Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>C:\Program Files (x86)\Gothic\system\</OutDir>
+    <OutDir>$(SolutionDir)Bin\</OutDir>
     <IncludePath>$(SolutionDir)\$(ProjectName)\;$(ALLUSERSPROFILE)\Union\SDK\Union\v1.0f\Include\;$(ALLUSERSPROFILE)\Union\SDK\DirectX7\include\;$(IncludePath)</IncludePath>
     <LibraryPath>$(ALLUSERSPROFILE)\Union\SDK\Union\v1.0f\Lib\;$(ALLUSERSPROFILE)\Union\SDK\DirectX7\Lib\;$(LibraryPath)</LibraryPath>
     <TargetName>$(ProjectName)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='G2 Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>C:\Program Files (x86)\Gothic\system\</OutDir>
+    <OutDir>$(SolutionDir)Bin\</OutDir>
     <IncludePath>$(SolutionDir)\$(ProjectName)\;$(ALLUSERSPROFILE)\Union\SDK\Union\v1.0f\Include\;$(ALLUSERSPROFILE)\Union\SDK\DirectX7\include\;$(IncludePath)</IncludePath>
     <LibraryPath>$(ALLUSERSPROFILE)\Union\SDK\Union\v1.0f\Lib\;$(ALLUSERSPROFILE)\Union\SDK\DirectX7\Lib\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='G1A Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>C:\Program Files (x86)\Gothic\system\</OutDir>
+    <OutDir>$(SolutionDir)Bin\</OutDir>
     <IncludePath>$(SolutionDir)\$(ProjectName)\;$(ALLUSERSPROFILE)\Union\SDK\Union\v1.0f\Include\;$(ALLUSERSPROFILE)\Union\SDK\DirectX7\include\;$(IncludePath)</IncludePath>
     <LibraryPath>$(ALLUSERSPROFILE)\Union\SDK\Union\v1.0f\Lib\;$(ALLUSERSPROFILE)\Union\SDK\DirectX7\Lib\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='G1 Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>C:\Program Files (x86)\Gothic\system\</OutDir>
+    <OutDir>C:\Gothic\system\</OutDir>
     <IncludePath>$(SolutionDir)\$(ProjectName)\;$(ALLUSERSPROFILE)\Union\SDK\Union\v1.0f\Include\;$(ALLUSERSPROFILE)\Union\SDK\DirectX7\include\;$(IncludePath)</IncludePath>
     <LibraryPath>$(ALLUSERSPROFILE)\Union\SDK\Union\v1.0f\Lib\;$(ALLUSERSPROFILE)\Union\SDK\DirectX7\Lib\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
@@ -283,6 +283,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;GOTHICPLUGIN_EXPORTS;__G1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -381,6 +382,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;GOTHICPLUGIN_EXPORTS;__G1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

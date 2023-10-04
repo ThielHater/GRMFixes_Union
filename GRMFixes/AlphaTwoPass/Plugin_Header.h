@@ -10,14 +10,19 @@ namespace NAMESPACE
 
 	struct GothicMemoryLocations
 	{
-		struct zCVob
+		struct zCRnd_D3D
 		{
-			static const int CalcRenderAlpha = 0x005D5F60;
+			static const int XD3D_SetRenderState = 0x007185C0;
 		};
 
-		struct zCRenderManager
+		struct zCTexture
 		{
-			static const int DrawVertexBuffer = 0x005B2A50;
+			static const int HasAlpha = 0x005C8860;
+		};
+
+		struct zCVob
+		{
+			static const int Render = 0x005D6090;
 		};
 	};
 }
