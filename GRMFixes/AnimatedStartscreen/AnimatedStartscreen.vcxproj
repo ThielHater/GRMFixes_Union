@@ -406,6 +406,7 @@
     <ClCompile Include="..\ZenGin\Gothic_I_Classic\staticDef_Ver0.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="bink.h" />
     <ClInclude Include="Interface_HeaderInclusion.h" />
     <ClInclude Include="Plugin_Header.h" />
     <ClInclude Include="Plugin_Source.hpp" />

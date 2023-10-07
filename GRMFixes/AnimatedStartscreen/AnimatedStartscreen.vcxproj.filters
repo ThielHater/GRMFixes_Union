@@ -2591,6 +2591,9 @@
     <ClInclude Include="Plugin_Source.hpp">
       <Filter>Plugin\Workspace\Plugin</Filter>
     </ClInclude>
+    <ClInclude Include="bink.h">
+      <Filter>Plugin\Workspace\Plugin</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include=".build_settings.inl">
