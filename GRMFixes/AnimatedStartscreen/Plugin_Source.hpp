@@ -72,7 +72,7 @@ namespace NAMESPACE
 
             zCTextureInfo texInfo;
             // Gothic and Bink have to use the same format!
-            // As RGB textures are not supported in Gothic, this may be the best option.
+            // As RGB textures are not supported by Gothic, this option yields best quality.
             texInfo.texFormat = zRND_TEX_FORMAT_RGB_565;
             texInfo.sizeX = bink->Width;
             texInfo.sizeY = bink->Height;
@@ -86,6 +86,16 @@ namespace NAMESPACE
             texConv->GetTextureBuffer(0, (void*&)texBuffer, pitch);
 
             BinkCopyToBuffer(bink, texBuffer, pitch, bink->Height, 0, 0, BINKCOPYALL | BINKSURFACE565);
+
+            /*
+            // use zRND_TEX_FORMAT_RGB_888 and BINKSURFACE24R then convert to DXT1 - works but is too slow
+            zCTextureInfo texInfoNew;
+            texInfoNew.texFormat = zRND_TEX_FORMAT_DXT1;
+            texInfoNew.sizeX = bink->Width;
+            texInfoNew.sizeY = bink->Height;
+            texInfoNew.numMipMap = 1;
+            ((zCTexConGeneric*)texConv)->ConvertTextureFormat(texInfoNew);
+            */
 
             zCTextureExchange::CopyContents(texConv, tex);
 
