@@ -13,7 +13,12 @@ namespace NAMESPACE
     int __fastcall CGameManager_PlayVideo(CGameManager* _this, void* vtable, zSTRING videoFile, int param);
     CInvoke<int(__thiscall*)(CGameManager* _this, zSTRING videoFile, int param)> Ivk_CGameManager_PlayVideo(GothicMemoryLocations::CGameManager::PlayVideo, &CGameManager_PlayVideo);
 
+    // 0x004DB850 public: virtual void __thiscall zCMusicSys_DirectMusic::PlayThemeByScript(class zSTRING const &,int,int *)
+    void __fastcall zCMusicSys_DirectMusic_PlayThemeByScript(zCMusicSys_DirectMusic* _this, void* vtable, const zSTRING& id, const int manipulate, zBOOL* done);
+    CInvoke<void(__thiscall*)(zCMusicSys_DirectMusic* _this, const zSTRING& id, const int manipulate, zBOOL* done)> Ivk_zCMusicSys_DirectMusic_PlayThemeByScript(GothicMemoryLocations::zCMusicSys_DirectMusic::PlayThemeByScript, &zCMusicSys_DirectMusic_PlayThemeByScript);
+
     bool g_PauseVideo = false;
+    BINK* g_bink = NULL;
 
     void Init()
     {
@@ -46,14 +51,14 @@ namespace NAMESPACE
 
         BinkSetSoundSystem(BinkOpenWaveOut, 0);
 
-        BINK* bink = BinkOpen(rootDir + videoDir + videoFile, 0);
-        if (!bink)
+        g_bink = BinkOpen(rootDir + videoDir + videoFile, 0);
+        if (!g_bink)
             return;
 
-        if (bink->NumTracks > 0)
+        if (g_bink->NumTracks > 0)
         {
-            BinkSetSoundOnOff(bink, 1);
-            BinkSetVolume(bink, 0, 65535);
+            BinkSetSoundOnOff(g_bink, 1);
+            BinkSetVolume(g_bink, 0, 65535);
         }
 
         zCTexture* tex = zrenderer->CreateTexture();
@@ -61,38 +66,40 @@ namespace NAMESPACE
 
         while (!gameMan->IsGameRunning() && !gameMan->exitGame)
         {
-            // TODO: How to stop music earlier?
-            if (bink->NumTracks > 0)
-                zmusic->Stop();
-
             if (g_PauseVideo)
             {
-                BinkPause(bink, 1);
+                BinkPause(g_bink, 1);
                 continue;
             }
             else
             {
-                BinkPause(bink, 0);
+                BinkPause(g_bink, 0);
             }
 
-            BinkDoFrame(bink);
-            BinkNextFrame(bink);
+            BinkDoFrame(g_bink);
+            BinkNextFrame(g_bink);
 
             // wait until it is time to show the frame
             while (true)
             {
-                if (!BinkWait(bink))
+                if (!BinkWait(g_bink))
                     break;
             }
 
+            if (!zrenderer)
+                break;
+
             zCTextureConvert* texConv = zrenderer->CreateTextureConvert();
+
+            if (!texConv)
+                break;
 
             zCTextureInfo texInfo;
             // Gothic and Bink have to use the same format!
             // As RGB textures are not supported by Gothic, this option yields best quality.
             texInfo.texFormat = zRND_TEX_FORMAT_RGB_565;
-            texInfo.sizeX = bink->Width;
-            texInfo.sizeY = bink->Height;
+            texInfo.sizeX = g_bink->Width;
+            texInfo.sizeY = g_bink->Height;
             texInfo.numMipMap = 1;
             texConv->SetTextureInfo(texInfo);
 
@@ -102,7 +109,10 @@ namespace NAMESPACE
             int pitch; // width * bytes per pixel
             texConv->GetTextureBuffer(0, (void*&)texBuffer, pitch);
 
-            BinkCopyToBuffer(bink, texBuffer, pitch, bink->Height, 0, 0, BINKCOPYALL | BINKSURFACE565);
+            if (!texBuffer)
+                break;
+
+            BinkCopyToBuffer(g_bink, texBuffer, pitch, g_bink->Height, 0, 0, BINKCOPYALL | BINKSURFACE565);
 
             /*
             // use zRND_TEX_FORMAT_RGB_888 and BINKSURFACE24R then convert to DXT1 - works but is too slow
@@ -119,11 +129,11 @@ namespace NAMESPACE
             texConv->Unlock();
             delete texConv;
 
-            if (bink && bink->FrameNum > bink->Frames)
-                BinkGoto(bink, 1, 0);
+            if (g_bink && g_bink->FrameNum > g_bink->Frames)
+                BinkGoto(g_bink, 1, 0);
         }
 
-        BinkClose(bink);
+        BinkClose(g_bink);
     }
 
     int __fastcall CGameManager_PlayVideo(CGameManager* _this, void* vtable, zSTRING videoFile, int param)
@@ -132,5 +142,12 @@ namespace NAMESPACE
         int result = Ivk_CGameManager_PlayVideo(_this, videoFile, param);
         g_PauseVideo = false;
         return result;
+    }
+
+    void __fastcall zCMusicSys_DirectMusic_PlayThemeByScript(zCMusicSys_DirectMusic* _this, void* vtable, const zSTRING& id, const int manipulate, zBOOL* done)
+    {
+        if (g_bink && g_bink->NumTracks > 0 && id == zSTRING("SYS_Menu"))
+            return;
+        Ivk_zCMusicSys_DirectMusic_PlayThemeByScript(_this, id, manipulate, done);
     }
 }

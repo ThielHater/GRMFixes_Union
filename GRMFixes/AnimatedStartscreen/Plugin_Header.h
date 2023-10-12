@@ -20,5 +20,10 @@ namespace NAMESPACE
 		{
 			static const int PlayVideo = 0x00429B80;
 		};
+
+		struct zCMusicSys_DirectMusic
+		{
+			static const int PlayThemeByScript = 0x004DB850;
+		};
 	};
 }
