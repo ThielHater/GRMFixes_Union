@@ -13,4 +13,12 @@ namespace NAMESPACE
 {
 	void Init();
 	void Animate();
+
+	struct GothicMemoryLocations
+	{
+		struct CGameManager
+		{
+			static const int PlayVideo = 0x00429B80;
+		};
+	};
 }

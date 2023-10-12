@@ -83,3 +83,4 @@ typedef void* (WINAPI* PFN_BinkOpenWaveOut)(unsigned int flags);
 typedef int (WINAPI* PFN_BinkSetSoundSystem)(void* open, HANDLE param);
 typedef unsigned int (WINAPI* PFN_BinkSetSoundOnOff)(void* bink, int onOff);
 typedef void (WINAPI* PFN_BinkSetVolume)(void* bink, unsigned int trackId, int volume);
+typedef void (WINAPI* PFN_BinkPause)(void* bink, int pause);

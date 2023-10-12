@@ -9,6 +9,12 @@ namespace NAMESPACE
 {
     #define zRES_CACHE_LOCKED 2
 
+    // 0x00429B80 public: int __thiscall CGameManager::PlayVideo(class zSTRING,int)
+    int __fastcall CGameManager_PlayVideo(CGameManager* _this, void* vtable, zSTRING videoFile, int param);
+    CInvoke<int(__thiscall*)(CGameManager* _this, zSTRING videoFile, int param)> Ivk_CGameManager_PlayVideo(GothicMemoryLocations::CGameManager::PlayVideo, &CGameManager_PlayVideo);
+
+    bool g_PauseVideo = false;
+
     void Init()
     {
         std::thread animThread(Animate);
@@ -32,6 +38,7 @@ namespace NAMESPACE
         PFN_BinkSetSoundSystem BinkSetSoundSystem = (PFN_BinkSetSoundSystem)GetProcAddress(dllBink, "_BinkSetSoundSystem@8");
         PFN_BinkSetSoundOnOff BinkSetSoundOnOff = (PFN_BinkSetSoundOnOff)GetProcAddress(dllBink, "_BinkSetSoundOnOff@8");
         PFN_BinkSetVolume BinkSetVolume = (PFN_BinkSetVolume)GetProcAddress(dllBink, "_BinkSetVolume@8");
+        PFN_BinkPause BinkPause = (PFN_BinkPause)GetProcAddress(dllBink, "_BinkPause@8");
 
         zSTRING rootDir = zoptions->GetDirString(DIR_ROOT);
         zSTRING videoDir = zoptions->GetDirString(DIR_VIDEO);
@@ -57,6 +64,16 @@ namespace NAMESPACE
             // TODO: How to stop music earlier?
             if (bink->NumTracks > 0)
                 zmusic->Stop();
+
+            if (g_PauseVideo)
+            {
+                BinkPause(bink, 1);
+                continue;
+            }
+            else
+            {
+                BinkPause(bink, 0);
+            }
 
             BinkDoFrame(bink);
             BinkNextFrame(bink);
@@ -107,5 +124,13 @@ namespace NAMESPACE
         }
 
         BinkClose(bink);
+    }
+
+    int __fastcall CGameManager_PlayVideo(CGameManager* _this, void* vtable, zSTRING videoFile, int param)
+    {
+        g_PauseVideo = true;
+        int result = Ivk_CGameManager_PlayVideo(_this, videoFile, param);
+        g_PauseVideo = false;
+        return result;
     }
 }
