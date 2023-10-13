@@ -32,6 +32,8 @@ namespace NAMESPACE
         if (!dllBink)
             return;
 
+        HMODULE d3dcompiler = GetModuleHandleA("d3dcompiler_47");
+
         PFN_BinkOpen BinkOpen = (PFN_BinkOpen)GetProcAddress(dllBink, "_BinkOpen@8");
         PFN_BinkClose BinkClose = (PFN_BinkClose)GetProcAddress(dllBink, "_BinkClose@4");
         PFN_BinkGoto BinkGoto = (PFN_BinkGoto)GetProcAddress(dllBink, "_BinkGoto@12");
@@ -61,8 +63,9 @@ namespace NAMESPACE
             BinkSetVolume(g_bink, 0, 65535);
         }
 
-        zCTexture* tex = zrenderer->CreateTexture();
-        gameMan->initScreen->InsertBack(tex);
+        zCTexture* tex1 = zrenderer->CreateTexture();
+        zCTexture* tex2 = zrenderer->CreateTexture();
+        int texIdx = 1;
 
         while (!gameMan->IsGameRunning() && !gameMan->exitGame)
         {
@@ -114,20 +117,22 @@ namespace NAMESPACE
 
             BinkCopyToBuffer(g_bink, texBuffer, pitch, g_bink->Height, 0, 0, BINKCOPYALL | BINKSURFACE565);
 
-            /*
-            // use zRND_TEX_FORMAT_RGB_888 and BINKSURFACE24R then convert to DXT1 - works but is too slow
-            zCTextureInfo texInfoNew;
-            texInfoNew.texFormat = zRND_TEX_FORMAT_DXT1;
-            texInfoNew.sizeX = bink->Width;
-            texInfoNew.sizeY = bink->Height;
-            texInfoNew.numMipMap = 1;
-            ((zCTexConGeneric*)texConv)->ConvertTextureFormat(texInfoNew);
-            */
+            if (!d3dcompiler)
+            {
+                // scale to next smallest pow-2 if the original Gothic renderer is used
+                int newWidth = pow(2, floor(log2(g_bink->Width)));
+                int newHeight = pow(2, floor(log2(g_bink->Height)));
+                texConv->ConvertToNewSize(newWidth, newHeight);
+            }
 
-            zCTextureExchange::CopyContents(texConv, tex);
+            zCTextureExchange::CopyContents(texConv, texIdx == 1 ? tex1 : tex2);
 
             texConv->Unlock();
             delete texConv;
+
+            gameMan->initScreen->InsertBack(texIdx == 1 ? tex1 : tex2);
+
+            texIdx *= -1;
 
             if (g_bink && g_bink->FrameNum > g_bink->Frames)
                 BinkGoto(g_bink, 1, 0);
