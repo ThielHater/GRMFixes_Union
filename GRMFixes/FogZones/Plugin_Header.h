@@ -3,23 +3,16 @@
 
 namespace NAMESPACE
 {
-	struct mySkyState
-	{
-		int start;
-		int duration;
-		zVEC3 color;
-	};
-
 	struct GothicMemoryLocations
 	{
-		struct zCRnd_D3D
+		struct zCZoneZFog
 		{
-			static const int BeginFrame = 0x00716F60;
+			static const int ProcessZoneList = 0x0060C090;
 		};
 
 		struct zCSkyControler_Outdoor
 		{
-			static const int SetFarZ = 0x005C0540;
+			static const int CalcFog = 0x005C01A0;
 		};
 	};
 }

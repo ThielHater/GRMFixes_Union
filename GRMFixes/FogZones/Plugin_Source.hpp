@@ -4,202 +4,230 @@
 
 #include "Plugin_Header.h"
 
-// TODO: Vorlage in zCSkyControler_Outdoor::CalcFog() und zCZoneZFog::ProcessZoneList()
-// TODO: Nebel in der Nacht sehr hell, dayWeight
 namespace NAMESPACE
 {
-	float g_farZ = 15000.0f;
+	template <class T>
+	T zLerp(const float t, const T& a, const T& b) {
+		return a + (b - a) * t;
+	}
 
-	float SinusEase(float t)
+	float zSinusEase(float t)
 	{
 		const float _PI = 3.14159265358979323846F;
 		return float((sinf(t * _PI - _PI / 2) + 1) / 2);
 	};
 
-	zVEC3 ColorLerp(zVEC3 pC1, zVEC3 pC2, float s)
+	void zClamp(float& value, float bl, float bh)
 	{
-		zVEC3 result = { pC1[0] + s * (pC2[0] - pC1[0]), pC1[1] + s * (pC2[1] - pC1[1]), pC1[2] + s * (pC2[2] - pC1[2]) };
-		return result;
+		if (value < bl)
+			value = bl;
+		else if (value > bh)
+			value = bh;
 	}
 
-	float GetCamPosWeight(zCZoneZFog* zone, zVEC3 posCam)
+	void zClamp01(float& f)
 	{
-		zVEC3 rel = posCam - zone->GetPositionWorld();
-		zVEC3 scale = zone->bbox3D.mins - zone->bbox3D.maxs;
-		scale *= 0.5f;
-		scale[0] = 1.0f / scale[0];
-		scale[1] = 1.0f / scale[1];
-		scale[2] = 1.0f / scale[2];
-		zVEC3 dot = { rel[0] * scale[0], rel[1] * scale[1], rel[2] * scale[2] };
-		float dist = dot.Length();
-		if (dist > 1.0f)
-			dist = 1.0f;
+		if ((*(zDWORD*)&f) >= (zDWORD)0x80000000)
+			f = 0.f;
+		else if ((*(zDWORD*)&f) > (zDWORD)0x3f800000)
+			f = 1.0F;
+	}
+
+	float zMin(const float a, const float b)
+	{
+		if (a < b)
+			return a;
+		else
+			return b;
+	}
+
+	float zMax(const float a, const float b)
+	{
+		if (a > b)
+			return a;
+		else
+			return b;
+	}
+
+	float GetIntensity(float r, float g, float b)
+	{
+		return (0.299F) * r + (0.587F) * g + (0.114F) * b;
+	};
+
+	float GetIntensity(zCOLOR col)
+	{
+		return GetIntensity(col.r, col.g, col.b);
+	};
+
+	float GetIntensity(zVEC3 col)
+	{
+		return GetIntensity(col[0], col[1], col[2]);
+	};
+	
+	float GetSkyFadeWeight(zCZoneZFog* fogZone)
+	{
+		float dist = fogZone->GetCamPosWeight();
+		if (dist < fogZone->innerRangePerc)
+			dist = 0;
+		else
+			dist = (dist - fogZone->innerRangePerc) / (1.0F - fogZone->innerRangePerc);
 		return dist;
 	};
 
-	float GetSkyFadeWeight(zCZoneZFog* zone, zVEC3 posCam)
-	{
-		float dist = GetCamPosWeight(zone, posCam);
-		if (dist < zone->innerRangePerc)
-			dist = 0;
-		else
-			dist = (dist - zone->innerRangePerc) / (1.0f - zone->innerRangePerc);
-		return dist;
-	};
+	zVEC3 g_overrideColor = zVEC3(0);
+	BOOL g_bOverrideColorFlag = FALSE;
+	zCOLOR g_resultFogColor = zCOLOR(0);
+	zCOLOR g_resultFogColorOverride = zCOLOR(0);
 
-	float GetActiveRange(zCZoneZFog* zone, zVEC3 posCam, float fogRangeDefault)
-	{
-		float dist = GetCamPosWeight(zone, posCam);
-		if (dist < zone->innerRangePerc)
-			dist = 0;
-		else
-			dist = (dist - zone->innerRangePerc) / (1.0f - zone->innerRangePerc);
-		float range = zone->fogRangeCenter + dist * (fogRangeDefault - zone->fogRangeCenter);
-		return range;
-	};
+	// 0x0060C090 public: virtual void __thiscall zCZoneZFog::ProcessZoneList(class zCArraySort<class zCZone *> const &,class zCArraySort<class zCZone *> const &,class zCWorld *)
+	void __fastcall zCZoneZFog_ProcessZoneList(zCZoneZFog* _this, void* vtable, zCArraySort<zCZone*> const& zoneList, zCArraySort<zCZone*> const& zoneDeactivateList, zCWorld* world);
+	CInvoke<void(__thiscall*)(zCZoneZFog* _this, zCArraySort<zCZone*> const& zoneList, zCArraySort<zCZone*> const& zoneDeactivateList, zCWorld* homeWorld)> Ivk_zCZoneZFog_ProcessZoneList(GothicMemoryLocations::zCZoneZFog::ProcessZoneList, &zCZoneZFog_ProcessZoneList);
 
-	extern "C" __declspec(dllexport) void SetFogColorAndRange()
+	void __fastcall zCZoneZFog_ProcessZoneList(zCZoneZFog* _this, void* vtable, zCArraySort<zCZone*> const& zoneList, zCArraySort<zCZone*> const& zoneDeactivateList, zCWorld* world)
 	{
-		if (gameMan && gameMan->gameSession && gameMan->gameSession->world && gameMan->gameSession->world->skyControlerOutdoor && gameMan->gameSession->camVob)
+		if ((zoneList.GetNum() == 0) && (zoneDeactivateList.GetNum() == 0))
+			return;
+
+		float fadeOutSkyWeight = 0;
+		float fadeOutColorWeight = 0;
+		zCOLOR backGroundColor = g_resultFogColor;
+		float dayWeight = (GetIntensity(backGroundColor) / 255.0f) * 3;
+		float avgRed = 0;
+		float avgGreen = 0;
+		float avgBlue = 0;
+		int numFogZonesModColor = 0;
+
+		zCZone* zoneDefault = world->SearchZoneDefaultByClass(zCZoneZFogDefault::classDef);
+		zClamp(dayWeight, 0.1f, 1.0f);
+
+		float defaultRange = zoneDefault
+			? ((zCZoneZFog*)zoneDefault)->fogRangeCenter
+			: world->GetActiveSkyControler()->GetFarZ();
+
+		float range = 0;
+		if (zoneList.GetNum() <= 0)
 		{
-			zCSkyControler_Outdoor* sky = (zCSkyControler_Outdoor*)gameMan->gameSession->world->skyControlerOutdoor;
-			zCZone** activeZones = gameMan->gameSession->world->zoneActiveList.GetArray();
-			int activeZonesNum = gameMan->gameSession->world->zoneActiveList.GetNum();
-
-			// Bestimmung der Kameraposition
-			zVEC3 posCam = gameMan->gameSession->camVob->GetPositionWorld();
-
-			// Berechnung der Uhrzeit
-			float skyTime = sky->masterTime;
-			long totalSecs = (long)(skyTime / 0.00001157407f);
-			int hours = totalSecs / 3600;
-			int minutes = (totalSecs % 3600) / 60;
-			if (skyTime >= 0.5f) hours -= 12; else hours += 12;
-			int totalMinutes = hours * 60 + minutes;
-
-			// Standardsichtweite ermitteln
-			float fogRange = 0.0f;
-			float fogRangeDefault = 15000.0f;
-			for (int i = 0; i < activeZonesNum; i++)
+			range = defaultRange;
+		}
+		else
+		{
+			for (int i = 0; i < zoneList.GetNum(); i++)
 			{
-				if (*(int*)activeZones[i] == 0x7DC28C) // zCZoneZFogDefault
-				{
-					fogRangeDefault = ((zCZoneZFogDefault*)activeZones[i])->fogRangeCenter;
-					break;
-				}
-			}
+				zCZoneZFog* zone = ((zCZoneZFog*)zoneList[i]);
+				range += zone->GetActiveRange(defaultRange);
+				float zoneWeight = GetSkyFadeWeight(zone);
 
-			// TODO: sky->backgroundColor
-			// TODO: sky->fogColorDayVariations
-			// SkyStates zwischen denen interpoliert wird
-			const int maxSkyStates = 12;
-			struct mySkyState skyStates[maxSkyStates] =
-			{
-				{ 0, 210,{ 5, 5, 20 } }, // 00:00 - 03:30
-				{ 210, 75,{ 5, 5, 20 } }, // 03:30 - 04:45
-				{ 285, 75,{ 78, 63, 96 } }, // 04:45 - 06:00
-				{ 360, 630,{ 116, 93, 81 } }, // 06:00 - 16:30
-				{ 990, 30,{ 116, 93, 81 } }, // 16:30 - 17:00
-				{ 1020, 30,{ 116, 116, 116 } }, // 17:00 - 17:30
-				{ 1050, 30,{ 116, 93, 81 } }, // 17:30 - 18:00
-				{ 1080, 60,{ 116, 93, 81 } }, // 18:00 - 19:00
-				{ 1140, 60,{ 162, 84, 71 } }, // 19:00 - 20:00
-				{ 1200, 90,{ 73, 43, 62 } }, // 20:00 - 21:30
-				{ 1290, 90,{ 17, 17, 48 } }, // 21:30 - 23:00
-				{ 1380, 60,{ 5, 5, 20 } } // 23:00 - 00:00
+				numFogZonesModColor++;
+				float zw = 1 - zoneWeight;
+				avgRed += zw * (float)zone->fogColor.r;
+				avgGreen += zw * (float)zone->fogColor.g;
+				avgBlue += zw * (float)zone->fogColor.b;
+				fadeOutColorWeight += zw;
 			};
 
-			// Grundton berechnen
-			zVEC3 fogColorDefault;
-			for (int i = 0; i < maxSkyStates; i++)
-			{
-				int j = (i + 1 < maxSkyStates) ? i + 1 : 0;
-				if ((totalMinutes >= skyStates[i].start) && (totalMinutes <= skyStates[i].start + skyStates[i].duration))
-				{
-					int duration = (totalMinutes - skyStates[i].start);
-					float backgroundWeight = (float)duration / (float)skyStates[i].duration;
-					fogColorDefault = ColorLerp(skyStates[i].color, skyStates[j].color, backgroundWeight);
-					break;
-				}
-			}
+			range /= (float)zoneList.GetNum();
+		};
 
-			// zusätzliche Farbanteile der Fogzones berechnen
-			zVEC3 fogColor;
-			float avgRed = 0.0f, avgGreen = 0.0f, avgBlue = 0.0f;
-			float sumFogZoneWeight = 0.0f;
-			int countFogZones = 0;
+		world->GetActiveSkyControler()->SetFarZ(range);
 
-			// alle Zones durchlaufen
-			for (int i = 0; i < activeZonesNum; i++)
-			{
-				if (*(int*)activeZones[i] == 0x7DC64C) // zCZoneFog
-				{
-					zCZoneZFog* zone = (zCZoneZFog*)activeZones[i];
-
-					// Gewichtung der Zone berechnen
-					float zoneWeight = GetSkyFadeWeight(zone, posCam);
-
-					// Ist der Spieler außerhalb der Zone?
-					if (zoneWeight == 1.0f)
-						continue;
-
-					// Farbanteile und Gewichtung aufaddieren, Anzahl der Zonen inkrementieren
-					float zw = 1 - zoneWeight;
-					avgRed += zw * zone->fogColor.r;
-					avgGreen += zw * zone->fogColor.g;
-					avgBlue += zw * zone->fogColor.b;
-					sumFogZoneWeight += zw;
-					countFogZones++;
-
-					// Sichweite zuänachst aufaddieren
-					fogRange += GetActiveRange(zone, posCam, fogRangeDefault);
-				}
-			}
-
-			// Ist der Spieler in keiner Fogzone?
-			if (countFogZones == 0)
-			{
-				// Grundton und Standardsichtweite verwenden
-				fogColor = fogColorDefault;
-				fogRange = fogRangeDefault;
-			}
-			else
-			{
-				// Grundton mit den zusätzlichen Farbanteilen mischen und Sichtweite berechnen
-				zVEC3 avgColor = { avgRed / countFogZones, avgGreen / countFogZones, avgBlue / countFogZones };
-				fogColor = ColorLerp(fogColorDefault, avgColor, SinusEase(sumFogZoneWeight / countFogZones));
-				fogRange = fogRange / countFogZones;
-			}
-
-			// TODO: sky->resultFogColor
-			// Farbe anwenden
-			if (sky->state0)
-				sky->state0->fogColor = fogColor;
-			if (sky->state1)
-				sky->state1->fogColor = fogColorDefault;
-
-			// Sichtweite merken
-			g_farZ = fogRange;
+		if (numFogZonesModColor >= 1)
+		{
+			zVEC3 origColor(backGroundColor.r, backGroundColor.g, backGroundColor.b);
+			zVEC3 overrideColor((avgRed * dayWeight) / numFogZonesModColor, (avgGreen * dayWeight) / numFogZonesModColor, (avgBlue * dayWeight) / numFogZonesModColor);
+			g_overrideColor = zLerp(zSinusEase(fadeOutColorWeight / numFogZonesModColor), origColor, overrideColor);
+			g_bOverrideColorFlag = TRUE;
+		}
+		else
+		{
+			g_bOverrideColorFlag = FALSE;
 		}
 	}
 
-	// 0x00716F60 public: virtual void __thiscall zCRnd_D3D::BeginFrame(void)
-	void __fastcall zCRnd_D3D_BeginFrame(zCRnd_D3D* _this, void* vtable);
-	CInvoke<void(__thiscall*)(zCRnd_D3D * _this)> Ivk_zCRnd_D3D_BeginFrame(GothicMemoryLocations::zCRnd_D3D::BeginFrame, &zCRnd_D3D_BeginFrame);
+	// 0x005C01A0 private: void __thiscall zCSkyControler_Outdoor::CalcFog(void)
+	void __fastcall zCSkyControler_Outdoor_CalcFog(zCSkyControler_Outdoor* _this, void* vtable);
+	CInvoke<void(__thiscall*)(zCSkyControler_Outdoor* _this)> Ivk_zCSkyControler_Outdoor_CalcFog(GothicMemoryLocations::zCSkyControler_Outdoor::CalcFog, &zCSkyControler_Outdoor_CalcFog);
 
-	// TODO: virtual void ProcessZoneList( zCArraySort<zCZone*> const&, zCArraySort<zCZone*> const&, zCWorld* ) zCall( 0x0060C090 );
-	void __fastcall zCRnd_D3D_BeginFrame(zCRnd_D3D* _this, void* vtable)
+	void __fastcall zCSkyControler_Outdoor_CalcFog(zCSkyControler_Outdoor* _this, void* vtable)
 	{
-		SetFogColorAndRange();
-		Ivk_zCRnd_D3D_BeginFrame(_this);
-	}
+		if (_this->GetUnderwaterFX())
+		{
+			_this->resultFogColor = _this->underwaterColor;
+			g_resultFogColor = _this->resultFogColor;
+			g_resultFogColorOverride = _this->resultFogColor;
+			_this->resultFogSkyFar = 1000.0F;
+			_this->resultFogSkyNear = 0.0F;
+			_this->resultFogFar = _this->underwaterFarZ;
+			_this->resultFogNear = 0.0F;
+			return;
+		};
 
-	// 0x005C0540 public: virtual void __thiscall zCSkyControler_Outdoor::SetFarZ(float)
-	void __fastcall zCSkyControler_Outdoor_SetFarZ(zCSkyControler_Outdoor* _this, void* vtable, float farZ);
-	CInvoke<void(__thiscall*)(zCSkyControler_Outdoor * _this, float farZ)> Ivk_zCSkyControler_Outdoor_SetFarZ(GothicMemoryLocations::zCSkyControler_Outdoor::SetFarZ, &zCSkyControler_Outdoor_SetFarZ);
+		float userFogMid = _this->userFogFar * 0.4F;
+		float userFogDelta = _this->userFogFar - userFogMid;
+		float fogTimeScale = _this->masterState.fogDist;
+		float ypos = zCCamera::activeCam->connectedVob->GetPositionWorld()[VY];
+		float fogYScale = _this->heightFogMaxY - _this->heightFogMinY != 0
+			? (ypos - _this->heightFogMinY) / (_this->heightFogMaxY - _this->heightFogMinY)
+			: 0;
+		zClamp01(fogYScale);
 
-	void __fastcall zCSkyControler_Outdoor_SetFarZ(zCSkyControler_Outdoor* _this, void* vtable, float farZ)
-	{
-		Ivk_zCSkyControler_Outdoor_SetFarZ(_this, g_farZ);
+		float resScale = zMax(fogTimeScale, fogYScale);
+		_this->resultFogScale = resScale;
+		resScale = 1.0F - resScale;
+
+		_this->resultFogFar = userFogMid + resScale * userFogDelta;
+		_this->resultFogFar *= _this->userFarZScalability;
+		_this->resultFogNear = 0.3f * _this->resultFogFar;
+
+		if (_this->rainFX.outdoorRainFXWeight > 0)
+		{
+			static float nearestFog = -2500.0f;
+			_this->resultFogNear = zLerp(_this->rainFX.outdoorRainFXWeight, _this->resultFogNear, nearestFog);
+		};
+
+		float skyUserFar = zMin(40000.0F, _this->resultFogFar * 1.5F) * 0.5F;
+		float skyUserMid = zMax(10000.0F, _this->resultFogNear * 1.5F) * 0.5F;
+		_this->resultFogSkyFar = skyUserMid + resScale * (skyUserFar - skyUserMid);
+		_this->resultFogSkyNear = 0.25F * _this->resultFogSkyFar;
+
+		if ((_this->rainFX.outdoorRainFXWeight > 0))
+		{
+			_this->resultFogSkyNear = 0.10F * _this->resultFogSkyFar;
+			_this->resultFogSkyFar *= 0.8F;
+		};
+
+		float intens = GetIntensity(_this->masterState.fogColor);
+		if (intens > 120.0F)
+			intens = 120.0F;
+		zVEC3 grey = zVEC3(intens);
+		float s = _this->resultFogScale * 0.5F;
+		zVEC3 col = _this->masterState.fogColor * (1.0F - s) + grey * s;
+
+		if (_this->rainFX.outdoorRainFXWeight > 0)
+			col = zLerp(_this->rainFX.outdoorRainFXWeight, col, grey);
+
+		g_resultFogColor.r = col[0];
+		g_resultFogColor.g = col[1];
+		g_resultFogColor.b = col[2];
+
+		_this->resultFogColor = g_resultFogColor;
+
+		intens = GetIntensity(g_overrideColor);
+		if (intens > 120.0F)
+			intens = 120.0F;
+		grey = zVEC3(intens);
+		col = g_overrideColor * (1.0F - s) + grey * s;
+
+		if (_this->rainFX.outdoorRainFXWeight > 0)
+			col = zLerp(_this->rainFX.outdoorRainFXWeight, col, grey);
+
+		g_resultFogColorOverride.r = col[0];
+		g_resultFogColorOverride.g = col[1];
+		g_resultFogColorOverride.b = col[2];
+
+		if (g_bOverrideColorFlag)
+		{
+			// Hooking of RenderSetup(), where the switch between resultFogColor and resultFogColorOverride resides, was not successful for some reason. Therefore I override the value here.
+			_this->resultFogColor = g_resultFogColorOverride;
+		}
 	}
 }
