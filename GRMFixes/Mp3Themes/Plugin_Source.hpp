@@ -38,6 +38,10 @@ namespace NAMESPACE
 	void __fastcall zCSndSys_MSS_StopSound(zCSndSys_MSS* _this, void* vtable, const int& sfxHandle);
 	CInvoke<void(__thiscall*)(zCSndSys_MSS* _this, const int& sfxHandle)> Ivk_zCSndSys_MSS_StopSound(0x004E4610, &zCSndSys_MSS_StopSound);
 
+	// 0x004E46D0 public: virtual void __thiscall zCSndSys_MSS::StopAllSounds(void)
+	void __fastcall zCSndSys_MSS_StopAllSounds(zCSndSys_MSS* _this, void* vtable);
+	CInvoke<void(__thiscall*)(zCSndSys_MSS* _this)> Ivk_zCSndSys_MSS_StopAllSounds(0x004E46D0, &zCSndSys_MSS_StopAllSounds);
+
 	// 0x004E5A20 public: virtual void __thiscall zCSndSys_MSS::UpdateSoundProps(int const &,int,float,float)
 	void __fastcall zCSndSys_MSS_UpdateSoundProps(zCSndSys_MSS* _this, void* vtable, const int& sfxHandle, int freq, float vol, float pan);
 	CInvoke<void(__thiscall*)(zCSndSys_MSS* _this, const int& sfxHandle, int freq, float vol, float pan)> Ivk_zCSndSys_MSS_UpdateSoundProps(0x004E5A20, &zCSndSys_MSS_UpdateSoundProps);
@@ -160,6 +164,11 @@ namespace NAMESPACE
 
 						g_themeHandlesMutex.lock();
 						g_themeHandles.erase(it->first);
+						if (g_currentTheme == it->second.fileName)
+						{
+							g_currentTheme = "";
+							g_currentThemeHandle = NULL;
+						}
 						g_themeHandlesMutex.unlock();
 					}
 
@@ -204,6 +213,15 @@ namespace NAMESPACE
 	void __fastcall zCSndSys_MSS_StopSound(zCSndSys_MSS* _this, void* vtable, const int& sfxHandle)
 	{
 		Ivk_zCSndSys_MSS_StopSound(_this, sfxHandle);
+	}
+
+	void __fastcall zCSndSys_MSS_StopAllSounds(zCSndSys_MSS* _this, void* vtable)
+	{
+		if (g_currentThemeHandle != NULL)
+		{
+			std::thread(&AddTransition, g_currentTheme, TransitionType::MilesSoundSystem, g_currentThemeHandle, FadeMode::Out, 0).detach();
+		}
+		Ivk_zCSndSys_MSS_StopAllSounds(_this);
 	}
 
 	void __fastcall zCSndSys_MSS_UpdateSoundProps(zCSndSys_MSS* _this, void* vtable, const int & sfxHandle, int freq, float vol, float pan)
@@ -260,7 +278,7 @@ namespace NAMESPACE
 		SetConsoleTextAttribute(con, 2);
 		cmd << "Plugin: ";
 
-		if (g_currentTheme != nextTheme && g_zCSndSys_MSS != NULL)
+		if (g_currentTheme != nextTheme)
 		{
 			char exe[MAX_PATH], drive[MAX_PATH], dir[MAX_PATH], wave[MAX_PATH];
 			GetModuleFileName(NULL, exe, MAX_PATH);
@@ -307,6 +325,12 @@ namespace NAMESPACE
 			if (FileExists(wave))
 			{
 				cmd << "Miles";
+
+				if (g_zCSndSys_MSS == NULL)
+				{
+					cmd << " but handle is not yet valid." << endl;
+					return;
+				}
 
 				g_themeHandlesMutex.lock();
 
