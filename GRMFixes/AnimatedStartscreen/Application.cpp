@@ -9,6 +9,7 @@ void Game_Init() {
 }
 
 void Game_Exit() {
+    NAMESPACE::Exit();
 }
 
 void Game_Loop() {
@@ -73,7 +74,7 @@ void Game_DefineExternals() {
 CApplication* lpApplication = CApplication::CreateRefApplication (
   Enabled( AppDefault ) Game_Entry,
   Enabled( True ) Game_Init,
-  Enabled( AppDefault ) Game_Exit,
+  Enabled( True ) Game_Exit,
   Enabled( AppDefault ) Game_Loop,
   Enabled( AppDefault ) Game_SaveBegin,
   Enabled( AppDefault ) Game_SaveEnd,

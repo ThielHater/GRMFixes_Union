@@ -75,6 +75,9 @@
     <ClCompile Include="Interface_SourceInclusion.cpp">
       <Filter>Plugin\Workspace\Interface</Filter>
     </ClCompile>
+    <ClCompile Include="ordered_lock.cpp">
+      <Filter>Plugin\Workspace\Plugin</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\ZenGin\Gothic_I_Addon\API\oAiHuman.h">
@@ -2592,6 +2595,9 @@
       <Filter>Plugin\Workspace\Plugin</Filter>
     </ClInclude>
     <ClInclude Include="bink.h">
+      <Filter>Plugin\Workspace\Plugin</Filter>
+    </ClInclude>
+    <ClInclude Include="ordered_lock.h">
       <Filter>Plugin\Workspace\Plugin</Filter>
     </ClInclude>
   </ItemGroup>

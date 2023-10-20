@@ -4,6 +4,7 @@
 
 #include "Plugin_Header.h"
 #include "bink.h"
+#include "ordered_lock.h"
 
 namespace NAMESPACE
 {
@@ -17,13 +18,19 @@ namespace NAMESPACE
     void __fastcall zCMusicSys_DirectMusic_PlayThemeByScript(zCMusicSys_DirectMusic* _this, void* vtable, const zSTRING& id, const int manipulate, zBOOL* done);
     CInvoke<void(__thiscall*)(zCMusicSys_DirectMusic* _this, const zSTRING& id, const int manipulate, zBOOL* done)> Ivk_zCMusicSys_DirectMusic_PlayThemeByScript(GothicMemoryLocations::zCMusicSys_DirectMusic::PlayThemeByScript, &zCMusicSys_DirectMusic_PlayThemeByScript);
 
-    bool g_PauseVideo = false;
+    ordered_lock* g_ordered_lock;
     BINK* g_bink = NULL;
 
     void Init()
     {
+        g_ordered_lock = new ordered_lock();
         std::thread animThread(Animate);
         animThread.detach();
+    }
+
+    void Exit()
+    {
+        delete g_ordered_lock;
     }
 
     void Animate()
@@ -69,15 +76,7 @@ namespace NAMESPACE
 
         while (!gameMan->IsGameRunning() && !gameMan->exitGame)
         {
-            if (g_PauseVideo)
-            {
-                BinkPause(g_bink, 1);
-                continue;
-            }
-            else
-            {
-                BinkPause(g_bink, 0);
-            }
+            g_ordered_lock->lock();
 
             BinkDoFrame(g_bink);
             BinkNextFrame(g_bink);
@@ -93,11 +92,11 @@ namespace NAMESPACE
                 break;
 
             zCTextureConvert* texConv = zrenderer->CreateTextureConvert();
+            zCTextureInfo texInfo;
 
             if (!texConv)
-                break;
+                goto loop_end;
 
-            zCTextureInfo texInfo;
             // Gothic and Bink have to use the same format!
             // As RGB textures are not supported by Gothic, this option yields best quality.
             texInfo.texFormat = zRND_TEX_FORMAT_RGB_565;
@@ -110,10 +109,13 @@ namespace NAMESPACE
 
             BYTE* texBuffer;
             int pitch; // width * bytes per pixel
-            texConv->GetTextureBuffer(0, (void*&)texBuffer, pitch);
 
-            if (!texBuffer)
-                break;
+            if (!texConv->GetTextureBuffer(0, (void*&)texBuffer, pitch) || !texBuffer)
+            {
+                texConv->Unlock();
+                delete texConv;
+                goto loop_end;
+            }
 
             BinkCopyToBuffer(g_bink, texBuffer, pitch, g_bink->Height, 0, 0, BINKCOPYALL | BINKSURFACE565);
 
@@ -136,6 +138,9 @@ namespace NAMESPACE
 
             if (g_bink && g_bink->FrameNum > g_bink->Frames)
                 BinkGoto(g_bink, 1, 0);
+
+            loop_end:
+            g_ordered_lock->unlock();
         }
 
         BinkClose(g_bink);
@@ -143,9 +148,9 @@ namespace NAMESPACE
 
     int __fastcall CGameManager_PlayVideo(CGameManager* _this, void* vtable, zSTRING videoFile, int param)
     {
-        g_PauseVideo = true;
+        g_ordered_lock->lock();
         int result = Ivk_CGameManager_PlayVideo(_this, videoFile, param);
-        g_PauseVideo = false;
+        g_ordered_lock->unlock();
         return result;
     }
 

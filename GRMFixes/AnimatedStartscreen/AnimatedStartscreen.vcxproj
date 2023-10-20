@@ -404,10 +404,12 @@
     <ClCompile Include="..\ZenGin\Gothic_I_Addon\staticDef_Ver1.cpp" />
     <ClCompile Include="..\ZenGin\Gothic_I_Classic\classDef_Ver0.cpp" />
     <ClCompile Include="..\ZenGin\Gothic_I_Classic\staticDef_Ver0.cpp" />
+    <ClCompile Include="ordered_lock.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bink.h" />
     <ClInclude Include="Interface_HeaderInclusion.h" />
+    <ClInclude Include="ordered_lock.h" />
     <ClInclude Include="Plugin_Header.h" />
     <ClInclude Include="Plugin_Source.hpp" />
     <ClInclude Include="UnionAfx.h" />

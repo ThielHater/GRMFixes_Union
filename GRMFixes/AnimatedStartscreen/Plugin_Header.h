@@ -12,6 +12,7 @@
 namespace NAMESPACE
 {
 	void Init();
+	void Exit();
 	void Animate();
 
 	struct GothicMemoryLocations
