@@ -78,6 +78,7 @@ namespace NAMESPACE
 	BOOL g_bOverrideColorFlag = FALSE;
 	zCOLOR g_resultFogColor = zCOLOR(0);
 	zCOLOR g_resultFogColorOverride = zCOLOR(0);
+	HMODULE d3dcompiler = GetModuleHandleA("d3dcompiler_47");
 
 	// 0x0060C090 public: virtual void __thiscall zCZoneZFog::ProcessZoneList(class zCArraySort<class zCZone *> const &,class zCArraySort<class zCZone *> const &,class zCWorld *)
 	void __fastcall zCZoneZFog_ProcessZoneList(zCZoneZFog* _this, void* vtable, zCArraySort<zCZone*> const& zoneList, zCArraySort<zCZone*> const& zoneDeactivateList, zCWorld* world);
@@ -85,9 +86,6 @@ namespace NAMESPACE
 
 	void __fastcall zCZoneZFog_ProcessZoneList(zCZoneZFog* _this, void* vtable, zCArraySort<zCZone*> const& zoneList, zCArraySort<zCZone*> const& zoneDeactivateList, zCWorld* world)
 	{
-		if ((zoneList.GetNum() == 0) && (zoneDeactivateList.GetNum() == 0))
-			return;
-
 		float fadeOutSkyWeight = 0;
 		float fadeOutColorWeight = 0;
 		zCOLOR backGroundColor = g_resultFogColor;
@@ -139,7 +137,15 @@ namespace NAMESPACE
 		}
 		else
 		{
+			g_overrideColor = ((zCSkyControler_Outdoor*)world->GetActiveSkyControler())->masterState.fogColor;
 			g_bOverrideColorFlag = FALSE;
+		}
+
+		// D3D11 renderer does not call these methods, so we have to do it
+		if (d3dcompiler)
+		{
+			((zCSkyControler_Outdoor*)world->GetActiveSkyControler())->Interpolate();
+			((zCSkyControler_Outdoor*)world->GetActiveSkyControler())->CalcFog();
 		}
 	}
 
@@ -224,9 +230,10 @@ namespace NAMESPACE
 		g_resultFogColorOverride.g = col[1];
 		g_resultFogColorOverride.b = col[2];
 
-		if (g_bOverrideColorFlag)
+		if (g_bOverrideColorFlag || d3dcompiler)
 		{
 			// Hooking of RenderSetup(), where the switch between resultFogColor and resultFogColorOverride resides, was not successful for some reason. Therefore I override the value here.
+			// If the D3D11 renderer is used, we act like the fog color is overriden all the time.
 			_this->resultFogColor = g_resultFogColorOverride;
 		}
 	}
