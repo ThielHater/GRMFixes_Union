@@ -23,6 +23,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AntiAliasing", "AntiAliasin
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AnimatedStartscreen", "AnimatedStartscreen\AnimatedStartscreen.vcxproj", "{B7D1203E-A1D2-42C8-BE3F-61D4DCF861E3}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RetroMode", "RetroMode\RetroMode.vcxproj", "{C91261E4-0301-499D-8239-92BD93FC616B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -237,6 +239,26 @@ Global
 		{B7D1203E-A1D2-42C8-BE3F-61D4DCF861E3}.G2A Release|x86.Build.0 = G2A Release|Win32
 		{B7D1203E-A1D2-42C8-BE3F-61D4DCF861E3}.Release|x86.ActiveCfg = Release|Win32
 		{B7D1203E-A1D2-42C8-BE3F-61D4DCF861E3}.Release|x86.Build.0 = Release|Win32
+		{C91261E4-0301-499D-8239-92BD93FC616B}.Debug|x86.ActiveCfg = Debug|Win32
+		{C91261E4-0301-499D-8239-92BD93FC616B}.Debug|x86.Build.0 = Debug|Win32
+		{C91261E4-0301-499D-8239-92BD93FC616B}.G1 Debug|x86.ActiveCfg = G1 Debug|Win32
+		{C91261E4-0301-499D-8239-92BD93FC616B}.G1 Debug|x86.Build.0 = G1 Debug|Win32
+		{C91261E4-0301-499D-8239-92BD93FC616B}.G1 Release|x86.ActiveCfg = G1 Release|Win32
+		{C91261E4-0301-499D-8239-92BD93FC616B}.G1 Release|x86.Build.0 = G1 Release|Win32
+		{C91261E4-0301-499D-8239-92BD93FC616B}.G1A Debug|x86.ActiveCfg = G1A Debug|Win32
+		{C91261E4-0301-499D-8239-92BD93FC616B}.G1A Debug|x86.Build.0 = G1A Debug|Win32
+		{C91261E4-0301-499D-8239-92BD93FC616B}.G1A Release|x86.ActiveCfg = G1A Release|Win32
+		{C91261E4-0301-499D-8239-92BD93FC616B}.G1A Release|x86.Build.0 = G1A Release|Win32
+		{C91261E4-0301-499D-8239-92BD93FC616B}.G2 Debug|x86.ActiveCfg = G2 Debug|Win32
+		{C91261E4-0301-499D-8239-92BD93FC616B}.G2 Debug|x86.Build.0 = G2 Debug|Win32
+		{C91261E4-0301-499D-8239-92BD93FC616B}.G2 Release|x86.ActiveCfg = G2 Release|Win32
+		{C91261E4-0301-499D-8239-92BD93FC616B}.G2 Release|x86.Build.0 = G2 Release|Win32
+		{C91261E4-0301-499D-8239-92BD93FC616B}.G2A Debug|x86.ActiveCfg = G2A Debug|Win32
+		{C91261E4-0301-499D-8239-92BD93FC616B}.G2A Debug|x86.Build.0 = G2A Debug|Win32
+		{C91261E4-0301-499D-8239-92BD93FC616B}.G2A Release|x86.ActiveCfg = G2A Release|Win32
+		{C91261E4-0301-499D-8239-92BD93FC616B}.G2A Release|x86.Build.0 = G2A Release|Win32
+		{C91261E4-0301-499D-8239-92BD93FC616B}.Release|x86.ActiveCfg = Release|Win32
+		{C91261E4-0301-499D-8239-92BD93FC616B}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

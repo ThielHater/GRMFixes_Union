@@ -280,16 +280,6 @@ namespace NAMESPACE
 
 		if (g_currentTheme != nextTheme)
 		{
-			char exe[MAX_PATH], drive[MAX_PATH], dir[MAX_PATH], wave[MAX_PATH];
-			GetModuleFileName(NULL, exe, MAX_PATH);
-			_splitpath(exe, drive, dir, NULL, NULL);
-			strcpy_s(wave, drive);
-			strcat_s(wave, dir);
-			strcat_s(wave, "..\\_work\\DATA\\Sound\\SFX\\");
-			strcat_s(wave, nextTheme.c_str());
-			strcat_s(wave, ".wav");
-			_fullpath(wave, wave, MAX_PATH);
-
 			int fadeOut = 3000;
 			int fadeIn = 3000;
 
@@ -322,7 +312,9 @@ namespace NAMESPACE
 			cmd << " using ";
 			SetConsoleTextAttribute(con, 10);
 
-			if (FileExists(wave))
+			char searchResult[MAX_PATH];
+
+			if (vdf_searchfile((text)(nextTheme + ".wav").c_str(), searchResult))
 			{
 				cmd << "Miles";
 
