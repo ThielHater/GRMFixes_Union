@@ -18,53 +18,33 @@ namespace NAMESPACE
 	std::mutex g_themeHandlesMutex;
 	std::mutex g_transitionsMutex;
 
-	// 0x004E8380 public: virtual void __thiscall zCSndFX_MSS::SetLooping(int)
-	void __fastcall zCSndFX_MSS_SetLooping(zCSndFX_MSS* _this, void* vtable, int loop);
-	CInvoke<void(__thiscall*)(zCSndFX_MSS* _this, int loop)> Ivk_zCSndFX_MSS_SetLooping(0x004E8380, &zCSndFX_MSS_SetLooping);
-
-	// 0x004DD530 public: __thiscall zCSndSys_MSS::zCSndSys_MSS(void)
+	// public: __thiscall zCSndSys_MSS::zCSndSys_MSS(void)
 	DWORD __fastcall zCSndSys_MSS_Constructor(zCSndSys_MSS* _this, void* vtable);
-	CInvoke<DWORD(__thiscall*)(zCSndSys_MSS* _this)> Ivk_zCSndSys_MSS_Constructor(0x004DD530, &zCSndSys_MSS_Constructor);
+	CInvoke<DWORD(__thiscall*)(zCSndSys_MSS* _this)> Ivk_zCSndSys_MSS_Constructor(GothicMemoryLocations::zCSndSys_MSS::Constructor, &zCSndSys_MSS_Constructor);
 
-	// 0x004E0370 public: virtual class zCSoundFX * __thiscall zCSndSys_MSS::LoadSoundFX(class zSTRING const &)
-	zCSoundFX* __fastcall zCSndSys_MSS_LoadSoundFX(zCSndSys_MSS* _this, void* vtable, const zSTRING& fileName);
-	CInvoke<zCSoundFX* (__thiscall*)(zCSndSys_MSS* _this, const zSTRING& fileName)> Ivk_zCSndSys_MSS_LoadSoundFX(0x004E0370, &zCSndSys_MSS_LoadSoundFX);
-
-	// 0x004E3220 public: virtual int __thiscall zCSndSys_MSS::PlaySound(class zCSoundFX *,int,int,float,float)
-	int __fastcall zCSndSys_MSS_PlaySound(zCSndSys_MSS* _this, void* vtable, zCSoundFX* sfx, int slot, int freq, float vol, float pan);
-	CInvoke<int(__thiscall*)(zCSndSys_MSS* _this, zCSoundFX* sfx, int slot, int freq, float vol, float pan)> Ivk_zCSndSys_MSS_PlaySound(0x004E3220, &zCSndSys_MSS_PlaySound);
-
-	// 0x004E4610 public: virtual void __thiscall zCSndSys_MSS::StopSound(int const &)
-	void __fastcall zCSndSys_MSS_StopSound(zCSndSys_MSS* _this, void* vtable, const int& sfxHandle);
-	CInvoke<void(__thiscall*)(zCSndSys_MSS* _this, const int& sfxHandle)> Ivk_zCSndSys_MSS_StopSound(0x004E4610, &zCSndSys_MSS_StopSound);
-
-	// 0x004E46D0 public: virtual void __thiscall zCSndSys_MSS::StopAllSounds(void)
+	// public: virtual void __thiscall zCSndSys_MSS::StopAllSounds(void)
 	void __fastcall zCSndSys_MSS_StopAllSounds(zCSndSys_MSS* _this, void* vtable);
-	CInvoke<void(__thiscall*)(zCSndSys_MSS* _this)> Ivk_zCSndSys_MSS_StopAllSounds(0x004E46D0, &zCSndSys_MSS_StopAllSounds);
+	CInvoke<void(__thiscall*)(zCSndSys_MSS* _this)> Ivk_zCSndSys_MSS_StopAllSounds(GothicMemoryLocations::zCSndSys_MSS::StopAllSounds, &zCSndSys_MSS_StopAllSounds);
 
-	// 0x004E5A20 public: virtual void __thiscall zCSndSys_MSS::UpdateSoundProps(int const &,int,float,float)
+	// public: virtual void __thiscall zCSndSys_MSS::UpdateSoundProps(int const &,int,float,float)
 	void __fastcall zCSndSys_MSS_UpdateSoundProps(zCSndSys_MSS* _this, void* vtable, const int& sfxHandle, int freq, float vol, float pan);
-	CInvoke<void(__thiscall*)(zCSndSys_MSS* _this, const int& sfxHandle, int freq, float vol, float pan)> Ivk_zCSndSys_MSS_UpdateSoundProps(0x004E5A20, &zCSndSys_MSS_UpdateSoundProps);
+	CInvoke<void(__thiscall*)(zCSndSys_MSS* _this, const int& sfxHandle, int freq, float vol, float pan)> Ivk_zCSndSys_MSS_UpdateSoundProps(GothicMemoryLocations::zCSndSys_MSS::UpdateSoundProps, &zCSndSys_MSS_UpdateSoundProps);
 
-	// 0x004DA270 public: __thiscall zCMusicSys_DirectMusic::zCMusicSys_DirectMusic(void)
+	// public: __thiscall zCMusicSys_DirectMusic::zCMusicSys_DirectMusic(void)
 	DWORD __fastcall zCMusicSys_DirectMusic_Constructor(zCMusicSys_DirectMusic* _this, void* vtable);
-	CInvoke<DWORD(__thiscall*)(zCMusicSys_DirectMusic* _this)> Ivk_zCMusicSys_DirectMusic_Constructor(0x004DA270, &zCMusicSys_DirectMusic_Constructor);
+	CInvoke<DWORD(__thiscall*)(zCMusicSys_DirectMusic* _this)> Ivk_zCMusicSys_DirectMusic_Constructor(GothicMemoryLocations::zCMusicSys_DirectMusic::Constructor, &zCMusicSys_DirectMusic_Constructor);
 
-	// 0x004DCC80 public: virtual void __thiscall zCMusicSys_DirectMusic::SetVolume(float)
+	// public: virtual void __thiscall zCMusicSys_DirectMusic::SetVolume(float)
 	void __fastcall zCMusicSys_DirectMusic_SetVolume(zCMusicSys_DirectMusic* _this, void* vtable, float vol);
-	CInvoke<void(__thiscall*)(zCMusicSys_DirectMusic* _this, float vol)> Ivk_zCMusicSys_DirectMusic_SetVolume(0x004DCC80, &zCMusicSys_DirectMusic_SetVolume);
+	CInvoke<void(__thiscall*)(zCMusicSys_DirectMusic* _this, float vol)> Ivk_zCMusicSys_DirectMusic_SetVolume(GothicMemoryLocations::zCMusicSys_DirectMusic::SetVolume, &zCMusicSys_DirectMusic_SetVolume);
 
-	// 0x004DCBF0 public: virtual void __thiscall zCMusicSys_DirectMusic::Stop(void)
-	void __fastcall zCMusicSys_DirectMusic_Stop(zCMusicSys_DirectMusic* _this, void* vtable);
-	CInvoke<void(__thiscall*)(zCMusicSys_DirectMusic* _this)> Ivk_zCMusicSys_DirectMusic_Stop(0x004DCBF0, &zCMusicSys_DirectMusic_Stop);
-
-	// 0x004DB850 public: virtual void __thiscall zCMusicSys_DirectMusic::PlayThemeByScript(class zSTRING const &,int,int *)
+	// public: virtual void __thiscall zCMusicSys_DirectMusic::PlayThemeByScript(class zSTRING const &,int,int *)
 	void __fastcall zCMusicSys_DirectMusic_PlayThemeByScript(zCMusicSys_DirectMusic* _this, void* vtable, const zSTRING& id, const int manipulate, zBOOL* done);
-	CInvoke<void(__thiscall*)(zCMusicSys_DirectMusic* _this, const zSTRING& id, const int manipulate, zBOOL* done)> Ivk_zCMusicSys_DirectMusic_PlayThemeByScript(0x004DB850, &zCMusicSys_DirectMusic_PlayThemeByScript);
+	CInvoke<void(__thiscall*)(zCMusicSys_DirectMusic* _this, const zSTRING& id, const int manipulate, zBOOL* done)> Ivk_zCMusicSys_DirectMusic_PlayThemeByScript(GothicMemoryLocations::zCMusicSys_DirectMusic::PlayThemeByScript, &zCMusicSys_DirectMusic_PlayThemeByScript);
 
-	// 0x004DC4E0 public: virtual void __thiscall zCMusicSys_DirectMusic::PlayTheme(class zCMusicTheme *,float const &,enum zTMus_TransType const &,enum zTMus_TransSubType const &)
+	// public: virtual void __thiscall zCMusicSys_DirectMusic::PlayTheme(class zCMusicTheme *,float const &,enum zTMus_TransType const &,enum zTMus_TransSubType const &)
 	void __fastcall zCMusicSys_DirectMusic_PlayTheme(zCMusicSys_DirectMusic* _this, void* vtable, struct zCMusicTheme* theme, const float& volume, const zTMus_TransType& tr, const zTMus_TransSubType& trSub);
-	CInvoke<void(__thiscall*)(zCMusicSys_DirectMusic* _this, struct zCMusicTheme* theme, const float& volume, const zTMus_TransType& tr, const zTMus_TransSubType& trSub)> Ivk_zCMusicSys_DirectMusic_PlayTheme(0x004DC4E0, &zCMusicSys_DirectMusic_PlayTheme);
+	CInvoke<void(__thiscall*)(zCMusicSys_DirectMusic* _this, struct zCMusicTheme* theme, const float& volume, const zTMus_TransType& tr, const zTMus_TransSubType& trSub)> Ivk_zCMusicSys_DirectMusic_PlayTheme(GothicMemoryLocations::zCMusicSys_DirectMusic::PlayTheme, &zCMusicSys_DirectMusic_PlayTheme);
 
 	bool FileExists(const char* fileName)
 	{
@@ -149,13 +129,13 @@ namespace NAMESPACE
 						if (it->second.type == TransitionType::MilesSoundSystem)
 						{
 							cmd << "Miles";
-							Ivk_zCSndSys_MSS_StopSound(g_zCSndSys_MSS, it->second.handle);
+							g_zCSndSys_MSS->StopSound(it->second.handle);
 						}
 						else if (it->second.type == TransitionType::DirectMusic)
 						{
 							cmd << "DirectMusic";
-							Ivk_zCMusicSys_DirectMusic_Stop(g_zCMusicSys_DirectMusic);
-							Ivk_zCMusicSys_DirectMusic_SetVolume(g_zCMusicSys_DirectMusic, g_MusicVolume);
+							g_zCMusicSys_DirectMusic->Stop();
+							g_zCMusicSys_DirectMusic->SetVolume(g_MusicVolume);
 						}
 
 						SetConsoleTextAttribute(con, 2);
@@ -186,11 +166,6 @@ namespace NAMESPACE
 		}
 	}
 
-	void __fastcall zCSndFX_MSS_SetLooping(zCSndFX_MSS* _this, void* vtable, int loop)
-	{
-		Ivk_zCSndFX_MSS_SetLooping(_this, loop);
-	}
-
 	DWORD __fastcall zCSndSys_MSS_Constructor(zCSndSys_MSS* _this, void* vtable)
 	{
 		//assert(std::is_same(g_zCSndSys_MSS, NULL));
@@ -198,21 +173,6 @@ namespace NAMESPACE
 		g_zCSndSys_MSS = (zCSndSys_MSS*)result;
 		std::thread(&ProcessTransitions).detach();
 		return result;
-	}
-
-	zCSoundFX* __fastcall zCSndSys_MSS_LoadSoundFX(zCSndSys_MSS* _this, void* vtable, const zSTRING& fileName)
-	{
-		return Ivk_zCSndSys_MSS_LoadSoundFX(_this, fileName);
-	}
-
-	int __fastcall zCSndSys_MSS_PlaySound(zCSndSys_MSS* _this, void* vtable, zCSoundFX* sfx, int slot, int freq, float vol, float pan)
-	{
-		return Ivk_zCSndSys_MSS_PlaySound(_this, sfx, slot, freq, vol, pan);
-	}
-
-	void __fastcall zCSndSys_MSS_StopSound(zCSndSys_MSS* _this, void* vtable, const int& sfxHandle)
-	{
-		Ivk_zCSndSys_MSS_StopSound(_this, sfxHandle);
 	}
 
 	void __fastcall zCSndSys_MSS_StopAllSounds(zCSndSys_MSS* _this, void* vtable)
@@ -244,11 +204,6 @@ namespace NAMESPACE
 		{
 			Ivk_zCSndSys_MSS_UpdateSoundProps(g_zCSndSys_MSS, g_currentThemeHandle, zSND_FREQ_DEFAULT, g_MusicVolume, zSND_PAN_CENTER);
 		}
-	}
-
-	void __fastcall zCMusicSys_DirectMusic_Stop(zCMusicSys_DirectMusic* _this, void* vtable)
-	{
-		Ivk_zCMusicSys_DirectMusic_Stop(_this);
 	}
 
 	void __fastcall zCMusicSys_DirectMusic_PlayThemeByScript(zCMusicSys_DirectMusic* _this, void* vtable, const zSTRING& id, const int manipulate, zBOOL* done)
@@ -330,9 +285,9 @@ namespace NAMESPACE
 
 				if (it == g_themeHandles.end())
 				{
-					zCSndFX_MSS* soundFx = (zCSndFX_MSS*)Ivk_zCSndSys_MSS_LoadSoundFX(g_zCSndSys_MSS, (nextTheme + ".wav").c_str());
-					Ivk_zCSndFX_MSS_SetLooping(soundFx, TRUE);
-					g_currentThemeHandle = Ivk_zCSndSys_MSS_PlaySound(g_zCSndSys_MSS, soundFx, zSND_SLOT_NONE, zSND_FREQ_DEFAULT, 0.0F, zSND_PAN_CENTER);
+					zCSndFX_MSS* soundFx = (zCSndFX_MSS*)g_zCSndSys_MSS->LoadSoundFX((nextTheme + ".wav").c_str());
+					soundFx->SetLooping(TRUE);
+					g_currentThemeHandle = g_zCSndSys_MSS->PlaySound(soundFx, zSND_SLOT_NONE, zSND_FREQ_DEFAULT, 0.0F, zSND_PAN_CENTER);
 					g_themeHandles.insert(g_themeHandles.end(), std::pair<std::string, int>(nextTheme, g_currentThemeHandle));
 				}
 				else

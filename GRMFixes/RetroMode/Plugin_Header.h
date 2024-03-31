@@ -27,6 +27,11 @@ namespace NAMESPACE
 			static const int InitializeMSS = 0x004DE2B0;
 			static const int ASM_SET_SAMPLERATE = 0x004DE8BE;
 		};
+
+		struct zCRenderer
+		{
+			static const int Vid_SetMode = 0x005AE970;
+		};
 #endif
 #ifdef GOTHIC2A
 		struct zCWorld
@@ -43,9 +48,12 @@ namespace NAMESPACE
 		{
 			static const int InitializeMSS = 0x004EB830;
 			static const int ASM_SET_SAMPLERATE = 0x004EBE6B;
-				;
+		};
+
+		struct zCRenderer
+		{
+			static const int Vid_SetMode = 0x005D3C20;
 		};
 #endif
-
 	};
 }

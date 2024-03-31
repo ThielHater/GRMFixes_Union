@@ -15,17 +15,21 @@ namespace NAMESPACE
 	IDirectDrawSurface7* g_retroSurface = NULL;
 	int g_numThreads = fmax(1, std::thread::hardware_concurrency() - 1);
 
-	// 0x00672F70 public: void __thiscall oCItem::RenderItem(class zCWorld *,class zCViewBase *,float)
+	// public: void __thiscall oCItem::RenderItem(class zCWorld *,class zCViewBase *,float)
 	void __fastcall oCItem_RenderItem(oCItem* _this, void* vtable, zCWorld* pWorld, zCViewBase* pView, float angle);
 	CInvoke<void(__thiscall*)(oCItem* _this, zCWorld* pWorld, zCViewBase* pView, float angle)> Ivk_oCItem_RenderItem(GothicMemoryLocations::oCItem::RenderItem, &oCItem_RenderItem);
 
-	// 0x005F3EC0 public: void __thiscall zCWorld::Render(class zCCamera &)
+	// public: void __thiscall zCWorld::Render(class zCCamera &)
 	void __fastcall zCWorld_Render(zCWorld* _this, void* vtable, zCCamera& cam);
 	CInvoke<void(__thiscall*)(zCWorld* _this, zCCamera& cam)> Ivk_zCWorld_Render(GothicMemoryLocations::zCWorld::Render, &zCWorld_Render);
 
-	// 0x004DE2B0 public: void __thiscall zCSndSys_MSS::InitializeMSS(void)
+	// public: void __thiscall zCSndSys_MSS::InitializeMSS(void)
 	void __fastcall zCSndSys_MSS_InitializeMSS(zCSndSys_MSS* _this, void* vtable);
 	CInvoke<void(__thiscall*)(zCSndSys_MSS* _this)> Ivk_zCSndSys_MSS_InitializeMSS(GothicMemoryLocations::zCSndSys_MSS::InitializeMSS, &zCSndSys_MSS_InitializeMSS);
+
+	// public: int __thiscall zCRenderer::Vid_SetMode(int,int,int,struct HWND__ * *)
+	int __fastcall zCRenderer_Vid_SetMode(zCRenderer* _this, void* vtable, int vidResX, int vidResY, int vidResBPP, HWND* phWnd);
+	CInvoke<int(__thiscall*)(zCRenderer* _this, int vidResX, int vidResY, int vidResBPP, HWND* phWnd)> Ivk_zCRenderer_Vid_SetMode(GothicMemoryLocations::zCRenderer::Vid_SetMode, &zCRenderer_Vid_SetMode);
 
 	void ReplaceCodeBytes(const char* bytes, int numBytes, unsigned int addr)
 	{
@@ -185,5 +189,17 @@ namespace NAMESPACE
 		ReplaceCodeBytes(mov, 15, GothicMemoryLocations::zCSndSys_MSS::ASM_SET_SAMPLERATE);
 
 		Ivk_zCSndSys_MSS_InitializeMSS(_this);
+	}
+
+	int __fastcall zCRenderer_Vid_SetMode(zCRenderer* _this, void* vtable, int vidResX, int vidResY, int vidResBPP, HWND* phWnd)
+	{
+		if (g_initialized)
+		{
+			g_retroSurface->Release();
+			g_retroSurface = NULL;
+			g_initialized = false;
+		}
+
+		return Ivk_zCRenderer_Vid_SetMode(_this, vidResX, vidResY, vidResBPP, phWnd);
 	}
 }
