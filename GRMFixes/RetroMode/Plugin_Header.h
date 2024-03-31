@@ -28,7 +28,7 @@ namespace NAMESPACE
 			static const int ASM_SET_SAMPLERATE = 0x004DE8BE;
 		};
 #endif
-#ifdef GOTHIC2
+#ifdef GOTHIC2A
 		struct zCWorld
 		{
 			static const int Render = 0x00621700;

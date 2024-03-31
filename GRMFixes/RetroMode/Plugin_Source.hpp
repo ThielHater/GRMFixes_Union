@@ -119,7 +119,19 @@ namespace NAMESPACE
 
 	void __fastcall zCWorld_Render(zCWorld* _this, void* vtable, zCCamera& cam)
 	{
+		if (!g_renderingItem)
+		{
+			((zCRnd_D3D*)zrenderer)->SetTextureStageState(0, zTRnd_TextureStageState::zRND_TSS_MAGFILTER, D3DTEXTUREMAGFILTER::D3DTFG_POINT);
+			((zCRnd_D3D*)zrenderer)->SetTextureStageState(0, zTRnd_TextureStageState::zRND_TSS_MINFILTER, D3DTEXTUREMINFILTER::D3DTFN_LINEAR);
+		}
+
 		Ivk_zCWorld_Render(_this, cam);
+
+		if (!g_renderingItem)
+		{
+			((zCRnd_D3D*)zrenderer)->SetTextureStageState(0, zTRnd_TextureStageState::zRND_TSS_MAGFILTER, D3DTEXTUREMAGFILTER::D3DTFG_LINEAR);
+			((zCRnd_D3D*)zrenderer)->SetTextureStageState(0, zTRnd_TextureStageState::zRND_TSS_MINFILTER, D3DTEXTUREMINFILTER::D3DTFN_LINEAR);
+		}
 
 		if (g_renderingItem)
 			return;
