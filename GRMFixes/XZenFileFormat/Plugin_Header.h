@@ -3,6 +3,9 @@
 
 #include <map>
 #include <string>
+#include <vector>
+#include <algorithm>
+#include <chrono>
 
 namespace NAMESPACE
 {
@@ -69,6 +72,8 @@ namespace NAMESPACE
 		{
 			static const int ASM_INDEX_CAST = 0x004FDF53;
 			static const int ASM_INDEX_SIZE_PUSH = 0x004FDF57;
+			static const int ASM_VERTEX_PROC_START = 0x004FCCEC;
+			static const int ASM_VERTEX_PROC_END = 0x004FD4C1 - 1;
 		};
 
 		struct zCArchiverFactory

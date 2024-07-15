@@ -3,6 +3,7 @@
 // For compile plugin in Multiplatform mode - select 'Debug' or 'Release' configuration.
 
 #include "Plugin_Header.h"
+#include "zCArrayDegenerated.h"
 
 namespace NAMESPACE
 {
@@ -82,6 +83,162 @@ namespace NAMESPACE
 		}
 	}
 
+	void __stdcall FasterVertexProcessingHook(zCMesh* mesh, zCArrayDegenerated<zCVertex*>* vertexList, zCArrayDegenerated<zCVertFeature*>* featureList, int numPolys, zCPolygon** polyList)
+	{
+		HANDLE con = cmd.GetHandle();
+		SetConsoleTextAttribute(con, 2);
+		cmd << "Plugin: ";
+		SetConsoleTextAttribute(con, 10);
+		cmd << "Collecting vertices..." << endl;
+		SetConsoleTextAttribute(con, 2);
+
+		auto start = std::chrono::system_clock::now();
+
+		// [VERSION 6] Need to overwrite the poiter here with new memory, as this isn't always valid as it seems.
+		// It's a minor memory, leak, but since it's only for the spacer, I'm not going to bother
+		vertexList->Array = new zCVertex * [1];
+		featureList->Array = new zCVertFeature * [1];
+
+		// Need to allocate at least *some* data or PushBack will fail.
+		vertexList->Reallocate(1);
+		featureList->Reallocate(1);
+
+		if (mesh)
+		{
+			// Get vertices from mesh
+			cmd << "- Got mesh data, generating vertex list... (" << mesh->numVert << " vertices)" << endl;
+
+			// Generate vertexlist
+			for (int i = 0; i < mesh->numVert; i++)
+				vertexList->PushBackFast(mesh->vertList[i]);
+			cmd << "- Done." << endl;
+
+			// Create featurelist from polygons
+			cmd << "- Generating feature list from polygons... (" << numPolys << " polygons)" << endl;
+
+			std::vector<zCVertFeature*> featureVec;
+			for (int i = 0; i < numPolys; i++)
+			{
+				if ((i % 10000) == 0)
+					cmd << "- " << i << " polygons processed." << endl;
+
+				zCPolygon* p = polyList[i];
+
+				// Iterate over poly-vertices
+				for (int j = 0; j < p->polyNumVert; j++)
+				{
+					// PB for each feature if it is already in that list. It's faster to add them all and then do a std::unique.
+					featureVec.push_back(p->feature[j]);
+				}
+			}
+
+			int numFeat = featureVec.size();
+			cmd << "- Got " << featureVec.size() << " features." << endl;
+
+			// Remove duplicates
+			std::sort(featureVec.begin(), featureVec.end());
+			std::unique(featureVec.begin(), featureVec.end());
+
+			cmd << "- Removed " << numFeat - featureVec.size()  << " duplicates." << endl;
+
+			cmd << "- Copying..." << endl;
+
+			// Copy to the games internal data structure
+			featureList->FromVector(featureVec);
+
+			cmd << "- Done." << endl;
+		}
+		else
+		{
+			cmd << "- Getting vertex data from shared polygons..." << endl;
+
+			// Get vertices from polygons
+			std::vector<zCVertex*> vertexVec;
+			std::vector<zCVertFeature*> featureVec;
+
+			for (int i = 0; i < numPolys; i++)
+			{
+				if ((i % 10000) == 0)
+					cmd << "- " << i << " polygons processed." << endl;
+
+				zCPolygon* p = polyList[i];
+
+				// Iterate over poly-vertices
+				for (int j = 0; j < p->polyNumVert; j++)
+				{
+					// PB for each feature if it is already in that list. It's faster to add them all and then do a std::unique.
+					vertexVec.push_back(p->vertex[j]);
+					featureVec.push_back(p->feature[j]);
+				}
+			}
+
+			int numVerts = vertexVec.size();
+			int numFeat = featureVec.size();
+			cmd << "- Got " << vertexVec.size() << " vertices." << endl;
+			cmd << "- Got " << featureVec.size() << " features." << endl;
+
+			// Remove duplicates
+			std::sort(featureVec.begin(), featureVec.end());
+			std::unique(featureVec.begin(), featureVec.end());
+
+			std::sort(vertexVec.begin(), vertexVec.end());
+			std::unique(vertexVec.begin(), vertexVec.end());
+
+			cmd << "- Removed " << numVerts - vertexVec.size() << " duplicate vertices and " << numFeat - featureVec.size() << " duplicate features!" << endl;
+			cmd << "- Copying..." << endl;
+
+			// Copy to the games internal data structure
+			featureList->FromVector(featureVec);
+			vertexList->FromVector(vertexVec);
+
+			cmd << "- Done." << endl;
+		}
+
+		long time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start).count();
+
+		cmd << "- Process took " << time << " milliseconds." << endl;
+
+		SetConsoleTextAttribute(con, 8);
+	}
+
+	void FixVertexProcessing()
+	{
+		/*
+		mov eax, [ebp + 0xC] # PolyList
+		push eax
+
+		mov eax, [ebp + 0x10] # NumPolys
+		push eax
+
+		lea eax, [ebp - 0x7C] # FeatList
+		push eax
+
+		lea eax, [ebp - 0x58] # VertList
+		push eax
+
+		mov eax, [ebp + 0x14] # Mesh
+		push eax
+
+		call 0x10203040
+		*/
+
+		// Remove old vertex-collection
+		ReplaceCodeRange(0x90, GothicMemoryLocations::SaveMSH::ASM_VERTEX_PROC_START, GothicMemoryLocations::SaveMSH::ASM_VERTEX_PROC_END);
+		cmd << "- Removed old vertex-collection code." << endl;
+
+		// Patch-code
+		unsigned char hookCode[] = { 0x8B, 0x45, 0x0C, 0x50, 0x8B, 0x45, 0x10, 0x50, 0x8D, 0x45, 0x84, 0x50, 0x8D, 0x45, 0xA8, 0x50, 0x8B, 0x45, 0x14, 0x50, 0xFF, 0x15 };
+
+		// Patch the game
+		ReplaceCodeBytes((char*)hookCode, ARRAYSIZE(hookCode), GothicMemoryLocations::SaveMSH::ASM_VERTEX_PROC_START);
+		cmd << "- Inserted function call to new vertex-collection code." << endl;
+
+		// Put our call-address into the code
+		static UINT32 s_fnaddr = (UINT32)FasterVertexProcessingHook;
+		UINT32 addr2 = (UINT32)&s_fnaddr;
+		ReplaceCodeBytes((char*)&addr2, sizeof(UINT32), GothicMemoryLocations::SaveMSH::ASM_VERTEX_PROC_START + ARRAYSIZE(hookCode));
+	}
+
 	/* Indices are only 2 bytes in Gothic 1. Patch some bytes to bump that to 4. */
 	void FixZENLoadSave()
 	{
@@ -146,6 +303,10 @@ namespace NAMESPACE
 		const char* imul = "\x6B\xD0\x04";
 		ReplaceCodeBytes(imul, strlen(imul), GothicMemoryLocations::LoadMSH::ASM_BLOCK_OFFSET_LEA_FIRST);
 		cmd << "- lea edx, [eax+eax*2] -> imul edx, eax, 4" << endl;
+
+#ifndef GAME
+		FixVertexProcessing();
+#endif
 
 		SetConsoleTextAttribute(con, 8);
 	}

@@ -1242,6 +1242,7 @@
     <ClInclude Include="..\ZenGin\Gothic_I_Classic\engineNames_Ver0.hpp" />
     <ClInclude Include="..\ZenGin\Gothic_I_Classic\vtable_Ver0.h" />
     <ClInclude Include="..\ZenGin\zGothicAPI.h" />
+    <ClInclude Include="zCArrayDegenerated.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".build_settings.inl" />
