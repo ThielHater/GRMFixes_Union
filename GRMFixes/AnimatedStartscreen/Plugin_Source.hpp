@@ -18,12 +18,18 @@ namespace NAMESPACE
     void __fastcall zCMusicSys_DirectMusic_PlayThemeByScript(zCMusicSys_DirectMusic* _this, void* vtable, const zSTRING& id, const int manipulate, zBOOL* done);
     CInvoke<void(__thiscall*)(zCMusicSys_DirectMusic* _this, const zSTRING& id, const int manipulate, zBOOL* done)> Ivk_zCMusicSys_DirectMusic_PlayThemeByScript(GothicMemoryLocations::zCMusicSys_DirectMusic::PlayThemeByScript, &zCMusicSys_DirectMusic_PlayThemeByScript);
 
-    ordered_lock* g_ordered_lock;
+    // public: int __thiscall zCRenderer::Vid_SetMode(int,int,int,struct HWND__ * *)
+    int __fastcall zCRenderer_Vid_SetMode(zCRenderer* _this, void* vtable, int vidResX, int vidResY, int vidResBPP, HWND* phWnd);
+    CInvoke<int(__thiscall*)(zCRenderer* _this, int vidResX, int vidResY, int vidResBPP, HWND* phWnd)> Ivk_zCRenderer_Vid_SetMode(GothicMemoryLocations::zCRenderer::Vid_SetMode, &zCRenderer_Vid_SetMode);
+
+    ordered_lock* g_ordered_lock = new ordered_lock();
     BINK* g_bink = NULL;
+    bool g_initialized = false;
+    zCTexture* g_tex1 = NULL;
+    zCTexture* g_tex2 = NULL;
 
     void Init()
     {
-        g_ordered_lock = new ordered_lock();
         std::thread animThread(Animate);
         animThread.detach();
     }
@@ -70,13 +76,18 @@ namespace NAMESPACE
             BinkSetVolume(g_bink, 0, 65535);
         }
 
-        zCTexture* tex1 = zrenderer->CreateTexture();
-        zCTexture* tex2 = zrenderer->CreateTexture();
         int texIdx = 1;
 
         while (!gameMan->IsGameRunning() && !gameMan->exitGame)
         {
             g_ordered_lock->lock();
+
+            if (!g_initialized)
+            {
+                g_tex1 = zrenderer->CreateTexture();
+                g_tex2 = zrenderer->CreateTexture();
+                g_initialized = true;
+            }
 
             BinkDoFrame(g_bink);
             BinkNextFrame(g_bink);
@@ -127,12 +138,12 @@ namespace NAMESPACE
                 texConv->ConvertToNewSize(newWidth, newHeight);
             }
 
-            zCTextureExchange::CopyContents(texConv, texIdx == 1 ? tex1 : tex2);
+            zCTextureExchange::CopyContents(texConv, texIdx == 1 ? g_tex1 : g_tex2);
 
             texConv->Unlock();
             delete texConv;
 
-            gameMan->initScreen->InsertBack(texIdx == 1 ? tex1 : tex2);
+            gameMan->initScreen->InsertBack(texIdx == 1 ? g_tex1 : g_tex2);
 
             texIdx *= -1;
 
@@ -159,5 +170,27 @@ namespace NAMESPACE
         if (g_bink && g_bink->NumTracks > 0 && id == zSTRING("SYS_Menu"))
             return;
         Ivk_zCMusicSys_DirectMusic_PlayThemeByScript(_this, id, manipulate, done);
+    }
+
+    int __fastcall zCRenderer_Vid_SetMode(zCRenderer* _this, void* vtable, int vidResX, int vidResY, int vidResBPP, HWND* phWnd)
+    {
+        if (g_initialized)
+        {
+            g_ordered_lock->lock();
+            g_tex1->Release();
+            g_tex1 = NULL;
+            g_tex2->Release();
+            g_tex2 = NULL;
+        }
+
+        int result = Ivk_zCRenderer_Vid_SetMode(_this, vidResX, vidResY, vidResBPP, phWnd);
+
+        if (g_initialized)
+        {
+            g_initialized = false;
+            g_ordered_lock->unlock();
+        }
+
+        return result;
     }
 }

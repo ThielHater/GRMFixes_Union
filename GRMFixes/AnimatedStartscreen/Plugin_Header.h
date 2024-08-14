@@ -26,5 +26,10 @@ namespace NAMESPACE
 		{
 			static const int PlayThemeByScript = 0x004DB850;
 		};
+
+		struct zCRenderer
+		{
+			static const int Vid_SetMode = 0x005AE970;
+		};
 	};
 }
